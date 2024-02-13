@@ -1,0 +1,26 @@
+<component name="libraryTable">
+  <library name="examples">
+    <CLASSES />
+    <JAVADOC />
+    <SOURCES>
+      <root url="file://$PROJECT_DIR$/jsch-jsch-0.2.11/examples" />
+      <root url="file://$PROJECT_DIR$/jsch-jsch-0.2.11/src/main/java" />
+      <root url="file://$PROJECT_DIR$/jsch-jsch-0.2.11/src/main/java-templates" />
+      <root url="file://$PROJECT_DIR$/jsch-jsch-0.2.11/src/main/java10" />
+      <root url="file://$PROJECT_DIR$/jsch-jsch-0.2.11/src/main/java11" />
+      <root url="file://$PROJECT_DIR$/jsch-jsch-0.2.11/src/main/java15" />
+      <root url="file://$PROJECT_DIR$/jsch-jsch-0.2.11/src/main/java16" />
+      <root url="file://$PROJECT_DIR$/jsch-jsch-0.2.11/src/main/java9" />
+      <root url="file://$PROJECT_DIR$/jsch-jsch-0.2.11/src/test/java" />
+      <root url="file://$PROJECT_DIR$/jsch-jsch-0.2.16/examples" />
+      <root url="file://$PROJECT_DIR$/jsch-jsch-0.2.16/src/main/java" />
+      <root url="file://$PROJECT_DIR$/jsch-jsch-0.2.16/src/main/java-templates" />
+      <root url="file://$PROJECT_DIR$/jsch-jsch-0.2.16/src/main/java10" />
+      <root url="file://$PROJECT_DIR$/jsch-jsch-0.2.16/src/main/java11" />
+      <root url="file://$PROJECT_DIR$/jsch-jsch-0.2.16/src/main/java15" />
+      <root url="file://$PROJECT_DIR$/jsch-jsch-0.2.16/src/main/java16" />
+      <root url="file://$PROJECT_DIR$/jsch-jsch-0.2.16/src/main/java9" />
+      <root url="file://$PROJECT_DIR$/jsch-jsch-0.2.16/src/test/java" />
+    </SOURCES>
+  </library>
+</component>

@@ -1,0 +1,12 @@
+<component name="ArtifactManager">
+  <artifact type="jar" name="SFTPclient:jar">
+    <output-path>$PROJECT_DIR$/out/artifacts/SFTPclient_jar</output-path>
+    <root id="archive" name="SFTPclient.jar">
+      <element id="module-output" name="SFTPclient" />
+      <element id="extracted-dir" path="$PROJECT_DIR$/commons-io-2.13.0-bin/commons-io-2.13.0/commons-io-2.13.0.jar" path-in-jar="/" />
+      <element id="extracted-dir" path="$PROJECT_DIR$/commons-net-3.9.0-bin/commons-net-3.9.0/commons-net-3.9.0.jar" path-in-jar="/" />
+      <element id="library" level="project" name="examples" />
+      <element id="extracted-dir" path="$PROJECT_DIR$/jsch-0.2.16.jar" path-in-jar="/" />
+    </root>
+  </artifact>
+</component>

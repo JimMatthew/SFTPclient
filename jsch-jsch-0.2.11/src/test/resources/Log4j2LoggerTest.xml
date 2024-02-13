@@ -1,0 +1,15 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<Configuration name="Log4j2LoggerTest" status="off" strict="true">
+  <Appenders>
+    <Appender type="Console" name="Console"/>
+    <Appender type="List" name="List"/>
+  </Appenders>
+  <Loggers>
+    <Root level="off">
+      <AppenderRef ref="Console"/>
+    </Root>
+    <Logger name="com.jcraft.jsch.JSch" level="all" additivity="false">
+      <AppenderRef ref="List"/>
+    </Logger>
+  </Loggers>
+</Configuration>

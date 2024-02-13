@@ -1,0 +1,21 @@
+2024/02/09 18:14:25 local System: Windows
+2024/02/09 18:14:44 Error Connecting to 192.168.1.1
+2024/02/09 18:15:14 Error Connecting to 192.168.1.1
+2024/02/09 18:15:38 Error Connecting to openwrt.lan
+2024/02/09 18:15:47 Remote host Disconnected
+2024/02/09 18:15:47 java.net.SocketException: Socket closed
+2024/02/09 18:15:47 Error Connecting to openwrt.lan
+2024/02/09 23:10:36 local System: Windows
+2024/02/09 23:11:26 java.net.ConnectException: Connection refused: no further information
+2024/02/09 23:11:26 Error Connecting to openwrt.lan
+2024/02/09 23:11:34 Connected to openwrt.lan
+2024/02/10 01:04:36 local System: Windows
+2024/02/10 01:04:56 local System: Windows
+2024/02/12 01:49:27 local System: Windows
+2024/02/12 01:49:46 Connected to openwrt.lan
+2024/02/12 01:50:09 Remote host Disconnected
+2024/02/12 11:23:34 local System: Windows
+2024/02/12 16:52:51 local System: Windows
+2024/02/12 16:53:54 Error Disconnecting Remote Host
+2024/02/13 08:50:22 local System: Windows
+2024/02/13 08:51:07 local System: Windows
