@@ -1,450 +1,461 @@
-import files.FileCommon;
-import files.FileFile;
-import java.awt.*;
-import java.awt.event.WindowAdapter;
-import java.awt.event.WindowEvent;
-import java.io.*;
-import java.util.ArrayList;
-import java.util.List;
-import org.json.simple.JSONArray;
-import org.json.simple.JSONObject;
-import org.json.simple.parser.*;
+import files.FileCommon
+import files.FileFile
+import org.json.simple.JSONArray
+import org.json.simple.JSONObject
+import org.json.simple.parser.JSONParser
+import org.json.simple.parser.ParseException
+import java.awt.Desktop
+import java.awt.event.WindowAdapter
+import java.awt.event.WindowEvent
+import java.io.File
+import java.io.FileReader
+import java.io.FileWriter
+import java.io.IOException
+import java.util.*
 
-public class ftpClientManager {
+class ftpClientManager {
+    private val gui: FtpClientGui
+    private val statusLog: StringBuilder
+    private var connector: RemoteConnector? = null
+    private var localPath: String? = null
+    private var selectedDirIndex = -1
+    private var remoteSystemType: OSType? = null
+    private var localSystemType: OSType? = null
+    private var localFileCommonList: List<FileCommon>? = null
+    private var remoteFileCommonList: List<FileCommon>? = null
 
-	private final FtpClientGui gui;
-	private final StringBuilder statusLog;
-	private RemoteConnector connector;
-	private String localPath;
-	private int selectedDirIndex = -1;
-	private OSType remoteSystemType;
-	private OSType localSystemType;
-	private List<FileCommon> localFileCommonList = null;
-	private List<FileCommon> remoteFileCommonList = null;
-
-	public ftpClientManager() {
-
-		localOSType();
-		gui = new FtpClientGui(this);
-		gui.setLocalPath(localPath);
-		statusLog = new StringBuilder();
-		logEvent("local System: " + localSystemType);
-		changeLocalFilePath();
-	}
-
-	public void connectPressed() {
-		StringBuilder p = new StringBuilder();
-		for (char c : gui.getPasswordField()) {
-			p.append(c);
-			c = 0;
-		}
-		int proto = gui.getConnectionType();
-		connectToServer(gui.getHostField(), gui.getUser(), p.toString(), proto);
-	}
-
-	public void connectToServer(String server, String user, String pass, int proto){
-		connector = switch (proto) {
-			case 0 -> new FtpConnector(server, user, pass);
-			case 1 -> new SftpConnector(server, user, pass);
-			case 2 -> new JftpConnector(server, user, pass);
-			default -> throw new IllegalArgumentException("Unexpected value: " + proto);
-		};
-
-		new Thread(() -> {
-			if (connector.connect()) {
-				String remotePath = "/";
-				gui.setRemotePath(remotePath);
-				logEvent("Connected to " + server);
-				remoteSystemType = connector.getSystemType();
-				changeRemoteFilePath();
-			} else {
-				logEvent("Error Connecting to " + server);
-			}
-		}).start();
-	}
-
-	public void connectSavedServer(int server) {
-		JSONObject o = getSelectedItem(server);
-		if (o != null){
-			connectToServer(o.get("server").toString(), o.get("user").toString(), o.get("pass").toString(),1);
-		}
-	}
-
-	public void saveServer() {
-		String server = gui.getHostField();
-		String user = gui.getUser();
-		StringBuilder p = new StringBuilder();
-		for (char c : gui.getPasswordField()) {
-			p.append(c);
-		}
-		JSONArray jsonArray = getJsonArray(p, server, user);
-
-		try (FileWriter file = new FileWriter("entries.json")) {
-			file.write(jsonArray.toJSONString());
-			file.flush();
-			System.out.println("Data has been written to " + "entries.json");
-		} catch (IOException e) {
-			e.printStackTrace();
-		}
-		gui.updateSavedServerList();
+    init {
+        localOSType()
+        gui = FtpClientGui(this)
+        gui.setLocalPath(localPath)
+        statusLog = StringBuilder()
+        logEvent("local System: $localSystemType")
+        changeLocalFilePath()
     }
 
-	private JSONArray getJsonArray(StringBuilder p, String server, String user) {
-		String pass = p.toString();
-		int proto = gui.getConnectionType();
-
-		JSONObject entry = new JSONObject();
-		entry.put("server", server);
-		entry.put("user", user);
-		entry.put("pass", pass);
-		entry.put("proto", proto);
-
-		JSONArray jsonArray;
-		try {
-			FileReader fileReader = new FileReader("entries.json");
-			JSONParser jsonParser = new JSONParser();
-			jsonArray = (JSONArray) jsonParser.parse(fileReader);
-			fileReader.close();
-		} catch (IOException | ParseException e) {
-			// If file doesn't exist or can't be parsed, create a new JSONArray
-			jsonArray = new JSONArray();
-		}
-		jsonArray.add(entry);
-		return jsonArray;
-	}
-
-	public String[] getAllHostnames() {
-		JSONParser parser = new JSONParser();
-		ArrayList<String> hostnames = new ArrayList<>();
-
-		File file = new File("entries.json");
-		if (file.exists()){
-			try (FileReader reader = new FileReader("entries.json")) {
-				Object obj = parser.parse(reader);
-				JSONArray jsonArray = (JSONArray) obj;
-
-				for (Object item : jsonArray) {
-					JSONObject jsonObject = (JSONObject) item;
-					String hostname = (String) jsonObject.get("server");
-					hostnames.add(hostname);
-				}
-			} catch (Exception e) {
-			}
-		}
-		return hostnames.toArray(new String[0]);
-	}
-
-
-	public static JSONObject getSelectedItem(int index) {
-		JSONParser parser = new JSONParser();
-
-		try (FileReader reader = new FileReader("entries.json")) {
-			Object obj = parser.parse(reader);
-			JSONArray jsonArray = (JSONArray) obj;
-			if (index >= 0 && index < jsonArray.size()) {
-				return (JSONObject) jsonArray.get(index);
-			} else {
-				System.err.println("Index out of bounds or file is empty.");
-				return null;
-			}
-		} catch (IOException | ParseException e) {
-			e.printStackTrace();
-			return null;
-		}
-	}
-
-	public OSType remoteSystemType() {
-		return remoteSystemType;
-	}
-
-	public OSType localSystemType() {
-		return localSystemType;
-	}
-
-	private void localOSType() {
-		String OS = System.getProperty("os.name").toLowerCase();
-		System.out.println(OS);
-		if (OS.contains("win")) {
-			localSystemType = OSType.Windows;
-			localPath = "C:\\";
-		} else if (OS.contains("nix") || OS.contains("nux")) {
-			localSystemType = OSType.Linux;
-			localPath = "/";
-		}
-	}
-
-	public void openRemoteFile() {
-
-		if (connector != null) { // Ensure we don't attempt to use a null connector
-			String rPath = getPath(DirectoryType.Remote) + gui.getRemoteFilenameField();
-			String lPath = System.getProperty("java.io.tmpdir") + File.separator + "tempf";
-
-			new Thread(() -> {
-				if (connector.downloadFile(rPath, lPath)) {
-					logEvent(gui.getRemoteFilenameField() + " was downloaded successfully");
-					openFile(System.getProperty("java.io.tmpdir") + File.separator + "tempf");
-				} else {
-					logEvent("Error Downloading File");
-				}
-			}).start();
-		} else {
-			logEvent("Not connected to a server");
-		}
-	}
-
-	public void openFilePressed() {
-		openFile(getPath(DirectoryType.Local)+gui.getLocalFileNameField());
+    fun connectPressed() {
+        val p = StringBuilder()
+        for (c in gui.passwordField) {
+            p.append(c)
+        }
+        val proto = gui.connectionType
+        connectToServer(gui.hostField, gui.user, p.toString(), proto)
     }
 
-	public void openFile(String filename) {
-		fileViewer fileViewer = new fileViewer();
-		fileViewer.addWindowListener(new WindowAdapter() {
+    fun connectToServer(server: String, user: String?, pass: String?, proto: Int) {
+        connector = when (proto) {
+            0 -> FtpConnector(server, user, pass)
+            1 -> SftpConnector(server, user, pass)
+            2 -> JftpConnector(server, user, pass)
+            else -> throw IllegalArgumentException("Unexpected value: $proto")
+        }
 
-			@Override
-			public void windowClosed(WindowEvent e) {
-				changeLocalFilePath();
-				System.out.println("A has closed");
-			}
-		});
-		File file = new File(filename);
-		new Thread(() -> fileViewer.openFile(file)).start();
-	}
-
-	public void openFileDefaultPressed(DirectoryType type) {
-		Desktop desktop = Desktop.getDesktop();
-		try {
-			desktop.edit(getFile(getPathField(type), gui.getLocalFileNameField(), type));
-		} catch (IOException e) {
-			System.out.println(e);
-			logEvent("Error Opening File");
-		}
-	}
-
-	public void uploadPressed() {
-		if (connector != null) { // Ensure we don't attempt to use a null connector
-			String localFile = gui.getLocalFileNameField();
-			String remotePath = getPath(DirectoryType.Remote);
-			String localPath = getPath(DirectoryType.Local);
-			String remoteFile = gui.getRemoteFilenameField();
-
-			if (connector.uploadFile(localPath + localFile, remoteFile, remotePath)) {
-				logEvent(localFile + " was uploaded sucessfully!");
-				changeRemoteFilePath();
-			} else {
-				logEvent("Error Uploading File");
-			}
-		}
-	}
-
-	public void downloadPressed() {
-		if (connector != null) { // Ensure we don't attempt to use a null connector
-
-			String lPath = getPath(DirectoryType.Local);
-			String rPath = getPath(DirectoryType.Remote);
-
-			new Thread(() -> {
-				if (connector.downloadFile(rPath + gui.getRemoteFilenameField(), lPath + gui.getLocalFileNameField())) {
-					logEvent(gui.getRemoteFilenameField() + " was downloaded sucessfully");
-					changeLocalFilePath();
-				} else {
-					logEvent("Error Downloading File");
-				}
-			}).start();
-		} else {
-			logEvent("Not connected to FTP server");
-		}
-	}
-
-	public String addEndSlashIfNotPresent(String path, OSType t) {
-
-		char s = t == OSType.Windows ? '\\' : '/';
-		if (!path.isEmpty() && path.charAt(path.length() - 1) != s) {
-			path += s;
-		}
-		return path;
-	}
-
-	public void aboutPressed() {
-		new aboutScreen().setVisible(true);
-	}
-
-	public void makeLocalDirectoryPressed() {
-		new DirectoryNameEntryGui(this).launchAndGetName(DirectoryType.Local);
-	}
-
-	public void makeRemoteDirectoryPressed() {
-		if (connector != null) {
-			new DirectoryNameEntryGui(this).launchAndGetName(DirectoryType.Remote);
-		} else {
-			logEvent("No Remote Host is Connected!");
-		}
-	}
-
-	public void makeDirectory(DirectoryType type, String name) {
-		if (type.equals(DirectoryType.Local)) {
-			if (new File(getPath(DirectoryType.Local) + name).mkdir()) {
-				logEvent("Directory Created");
-				changeLocalFilePath();
-			} else {
-				logEvent("Error Creating Directory");
-			}
-		}
-		if (type.equals(DirectoryType.Remote)) {
-			if (connector.makeDirectory(getPath(DirectoryType.Remote), name)) {
-				logEvent("Directory Created");
-				changeRemoteFilePath();
-			} else {
-				logEvent("Error Creating Directory!");
-			}
-		}
-	}
-
-	public void changeLocalFilePath() {
-		String path = getPath(DirectoryType.Local);
-		localFileCommonList = getCommonFileList(path);
-		gui.displayLocalFiles(localFileCommonList);
-	}
-
-	public void changeRemoteFilePath() {
-		if (connector != null) {
-			try {
-				remoteFileCommonList = connector.getCommonFileList(getPath(DirectoryType.Remote));
-				gui.displayRemoteFiles(remoteFileCommonList);
-			} catch (IOException e) {
-				e.printStackTrace();
-			}
-		}
-	}
-
-	public void disconnectRemoteHost() {
-		if (connector != null && connector.disconnect()) {
-			logEvent("Remote host Disconnected");
-			gui.remoteDisconnect();
-		} else {
-			logEvent("Error Disconnecting Remote Host");
-		}
-	}
-
-	// This method is responsible for navigation through the file displays
-	// Index is the line in the display
-	public void mouseClickOnItem(int index, DirectoryType type) {
-
-		List<FileCommon> fileList = type == DirectoryType.Local ? localFileCommonList : remoteFileCommonList;
-		if (index >= fileList.size() || index < 0) {
-			return;
-		}
-		if (fileList.get(index).isFile()) { 
-			setFileNameField(fileList.get(index).getFileName(), type);
-		} else if (fileList.get(index).isDirectory()) { 
-			if (index == selectedDirIndex) { 
-				setFilePathField(getPath(type) + fileList.get(index).getFileName(), type);
-				changePath(type);
-			} else {
-				selectedDirIndex = index;
-			}
-		}
-	}
-
-	public void parentPressed(DirectoryType type, OSType t) {
-		if (t == null)
-			return;
-		setFilePathField(ParentDirectory(getPathField(type), t), type);
-		changePath(type);
-	}
-
-	private String Slash(OSType t) {
-		return t == OSType.Windows ? "\\" : "/";
-	}
-
-	private void changePath(DirectoryType t) {
-		selectedDirIndex = -1;
-		if (t == DirectoryType.Local) {
-			changeLocalFilePath();
-		} else {
-			changeRemoteFilePath();
-		}
-	}
-
-	private String getPathField(DirectoryType t) {
-		return t == DirectoryType.Local ? gui.getLocalPathField() : gui.getRemotePathField();
-	}
-
-	private String getPath(DirectoryType t) {
-
-		if (t == DirectoryType.Local) {
-			return addEndSlashIfNotPresent(gui.getLocalPathField(), localSystemType);
-		} else {
-			return addEndSlashIfNotPresent(gui.getRemotePathField(), remoteSystemType);
-		}
-	}
-
-	private void setFilePathField(String path, DirectoryType t) {
-		if (t == DirectoryType.Local) {
-			gui.setLocalPath(path);
-		} else {
-			gui.setRemotePath(path);
-		}
-	}
-
-	private void setFileNameField(String name, DirectoryType t) {
-		if (t == DirectoryType.Local) {
-			gui.setLocalFileNameField(name);
-		} else {
-			gui.setRemoteFileNameField(name);
-		}
-	}
-
-	private String ParentDirectory(String dir, OSType t) {
-		String parent = dir;
-		int offset = dir.lastIndexOf(Slash(t));
-		if (t.equals(OSType.Windows)) {
-			if (offset != -1) {
-				parent = dir.substring(0, offset);
-			}
-		} else {
-			System.out.println("offset: "+offset);
-			if (offset > 0) {
-				parent = dir.substring(0, offset);
-			} if (offset == 0) {
-				parent = dir.substring(0, 1);
-			}
-		}
-		return parent;
-	}
-
-	private void logEvent(String log) {
-		logWriter.log(log);
-		statusLog.append(log).append("\n");
-		gui.setStatusField(statusLog.toString());
-	}
-
-	private File getFile(String path, String name, DirectoryType type) {
-		path = getPath(type);
-		return type == DirectoryType.Local ? new File(path+name): null;
-	}
-	
-	public static List<FileCommon> getCommonFileList(String path){
-    	List<FileCommon> fileList = new ArrayList<>();
-    	
-    	File[] list =new File(path).listFiles();
-    	if (list != null) {
-    		for (File f : list) {
-        		if (f.isDirectory()) {
-        			FileCommon filec = new FileFile(f);
-        			fileList.add(filec);
-        		}
-        	}
-        	for (File f : list) {
-        		if (f.isFile()) {
-        			FileCommon filec = new FileFile(f);
-        			fileList.add(filec);
-        		}
-        	}
-    	}
-    	return fileList;
+        Thread {
+            if (connector!!.connect()) {
+                val remotePath = "/"
+                gui.setRemotePath(remotePath)
+                logEvent("Connected to $server")
+                remoteSystemType = connector!!.systemType
+                changeRemoteFilePath()
+            } else {
+                logEvent("Error Connecting to $server")
+            }
+        }.start()
     }
 
-	public enum OSType {
-		Windows, Linux
-	}
+    fun connectSavedServer(server: Int) {
+        val o = getSelectedItem(server)
+        if (o != null) {
+            connectToServer(o["server"].toString(), o["user"].toString(), o["pass"].toString(), 1)
+        }
+    }
+
+    fun saveServer() {
+        val server = gui.hostField
+        val user = gui.user
+        val p = StringBuilder()
+        for (c in gui.passwordField) {
+            p.append(c)
+        }
+        val jsonArray = getJsonArray(p, server, user)
+
+        try {
+            FileWriter("entries.json").use { file ->
+                file.write(jsonArray.toJSONString())
+                file.flush()
+                println("Data has been written to " + "entries.json")
+            }
+        } catch (e: IOException) {
+            e.printStackTrace()
+        }
+        gui.updateSavedServerList()
+    }
+
+    private fun getJsonArray(p: StringBuilder, server: String, user: String): JSONArray {
+        val pass = p.toString()
+        val proto = gui.connectionType
+
+        val entry = JSONObject()
+        entry["server"] = server
+        entry["user"] = user
+        entry["pass"] = pass
+        entry["proto"] = proto
+
+        var jsonArray: JSONArray
+        try {
+            val fileReader = FileReader("entries.json")
+            val jsonParser = JSONParser()
+            jsonArray = jsonParser.parse(fileReader) as JSONArray
+            fileReader.close()
+        } catch (e: IOException) {
+            // If file doesn't exist or can't be parsed, create a new JSONArray
+            jsonArray = JSONArray()
+        } catch (e: ParseException) {
+            jsonArray = JSONArray()
+        }
+        jsonArray.add(entry)
+        return jsonArray
+    }
+
+    val allHostnames: Array<String>
+        get() {
+            val parser = JSONParser()
+            val hostnames = ArrayList<String>()
+
+            val file = File("entries.json")
+            if (file.exists()) {
+                try {
+                    FileReader("entries.json").use { reader ->
+                        val obj = parser.parse(reader)
+                        val jsonArray = obj as JSONArray
+                        for (item in jsonArray) {
+                            val jsonObject = item as JSONObject
+                            val hostname = jsonObject["server"] as String
+                            hostnames.add(hostname)
+                        }
+                    }
+                } catch (e: Exception) {
+                }
+            }
+            return hostnames.toTypedArray<String>()
+        }
+
+
+    fun remoteSystemType(): OSType? {
+        return remoteSystemType
+    }
+
+    fun localSystemType(): OSType? {
+        return localSystemType
+    }
+
+    private fun localOSType() {
+        val OS = System.getProperty("os.name").lowercase(Locale.getDefault())
+        println(OS)
+        if (OS.contains("win")) {
+            localSystemType = OSType.Windows
+            localPath = "C:\\"
+        } else if (OS.contains("nix") || OS.contains("nux")) {
+            localSystemType = OSType.Linux
+            localPath = "/"
+        }
+    }
+
+    fun openRemoteFile() {
+        if (connector != null) { // Ensure we don't attempt to use a null connector
+            val rPath = getPath(DirectoryType.Remote) + gui.remoteFilenameField
+            val lPath = System.getProperty("java.io.tmpdir") + File.separator + "tempf"
+
+            Thread {
+                if (connector!!.downloadFile(rPath, lPath)) {
+                    logEvent(gui.remoteFilenameField + " was downloaded successfully")
+                    openFile(System.getProperty("java.io.tmpdir") + File.separator + "tempf")
+                } else {
+                    logEvent("Error Downloading File")
+                }
+            }.start()
+        } else {
+            logEvent("Not connected to a server")
+        }
+    }
+
+    fun openFilePressed() {
+        openFile(getPath(DirectoryType.Local) + gui.localFileNameField)
+    }
+
+    private fun openFile(filename: String) {
+        val file = File(filename)
+        if (file.exists()){
+            val fileViewer = fileViewer()
+            fileViewer.addWindowListener(object : WindowAdapter() {
+                override fun windowClosed(e: WindowEvent) {
+                    changeLocalFilePath()
+                    println("A has closed")
+                }
+            })
+            Thread { fileViewer.openFile(file) }.start()
+        }
+    }
+
+    fun openFileDefaultPressed(type: DirectoryType) {
+        val desktop = Desktop.getDesktop()
+        try {
+            desktop.edit(getFile(getPathField(type), gui.localFileNameField, type))
+        } catch (e: IOException) {
+            println(e)
+            logEvent("Error Opening File")
+        }
+    }
+
+    fun uploadPressed() {
+        if (connector != null) { // Ensure we don't attempt to use a null connector
+            val localFile = gui.localFileNameField
+            val remotePath = getPath(DirectoryType.Remote)
+            val localPath = getPath(DirectoryType.Local)
+            val remoteFile = gui.remoteFilenameField
+
+            if (connector!!.uploadFile(localPath + localFile, remoteFile, remotePath)) {
+                logEvent("$localFile was uploaded sucessfully!")
+                changeRemoteFilePath()
+            } else {
+                logEvent("Error Uploading File")
+            }
+        }
+    }
+
+    fun downloadPressed() {
+        if (connector != null) { // Ensure we don't attempt to use a null connector
+
+            val lPath = getPath(DirectoryType.Local)
+            val rPath = getPath(DirectoryType.Remote)
+
+            Thread {
+                if (connector!!.downloadFile(rPath + gui.remoteFilenameField, lPath + gui.localFileNameField)) {
+                    logEvent(gui.remoteFilenameField + " was downloaded sucessfully")
+                    changeLocalFilePath()
+                } else {
+                    logEvent("Error Downloading File")
+                }
+            }.start()
+        } else {
+            logEvent("Not connected to FTP server")
+        }
+    }
+
+    fun addEndSlashIfNotPresent(path: String, t: OSType?): String {
+        var p = path
+        val s = if (t == OSType.Windows) '\\' else '/'
+        if (p.isNotEmpty() && p[p.length - 1] != s) {
+            p += s
+        }
+        return p
+    }
+
+    fun aboutPressed() {
+        aboutScreen().isVisible = true
+    }
+
+    fun makeLocalDirectoryPressed() {
+        DirectoryNameEntryGui(this).launchAndGetName(DirectoryType.Local)
+    }
+
+    fun makeRemoteDirectoryPressed() {
+        if (connector != null) {
+            DirectoryNameEntryGui(this).launchAndGetName(DirectoryType.Remote)
+        } else {
+            logEvent("No Remote Host is Connected!")
+        }
+    }
+
+    fun makeDirectory(type: DirectoryType, name: String) {
+        if (type == DirectoryType.Local) {
+            if (File(getPath(DirectoryType.Local) + name).mkdir()) {
+                logEvent("Directory Created")
+                changeLocalFilePath()
+            } else {
+                logEvent("Error Creating Directory")
+            }
+        }
+        if (type == DirectoryType.Remote) {
+            if (connector!!.makeDirectory(getPath(DirectoryType.Remote), name)) {
+                logEvent("Directory Created")
+                changeRemoteFilePath()
+            } else {
+                logEvent("Error Creating Directory!")
+            }
+        }
+    }
+
+    fun changeLocalFilePath() {
+        val path = getPath(DirectoryType.Local)
+        localFileCommonList = getCommonFileList(path)
+        gui.displayLocalFiles(localFileCommonList)
+    }
+
+    fun changeRemoteFilePath() {
+        if (connector != null) {
+            try {
+                remoteFileCommonList = connector!!.getCommonFileList(getPath(DirectoryType.Remote))
+                gui.displayRemoteFiles(remoteFileCommonList)
+            } catch (e: IOException) {
+                e.printStackTrace()
+            }
+        }
+    }
+
+    fun disconnectRemoteHost() {
+        if (connector != null && connector!!.disconnect()) {
+            logEvent("Remote host Disconnected")
+            gui.remoteDisconnect()
+        } else {
+            logEvent("Error Disconnecting Remote Host")
+        }
+    }
+
+    // This method is responsible for navigation through the file displays
+    // Index is the line in the display
+    fun mouseClickOnItem(index: Int, type: DirectoryType) {
+        val fileList = if (type == DirectoryType.Local) localFileCommonList else remoteFileCommonList
+        if (index >= fileList!!.size || index < 0) {
+            return
+        }
+        if (fileList[index].isFile) {
+            setFileNameField(fileList[index].fileName, type)
+        } else if (fileList[index].isDirectory) {
+            if (index == selectedDirIndex) {
+                setFilePathField(getPath(type) + fileList[index].fileName, type)
+                changePath(type)
+            } else {
+                selectedDirIndex = index
+            }
+        }
+    }
+
+    fun parentPressed(type: DirectoryType, t: OSType?) {
+        if (t == null) return
+        setFilePathField(ParentDirectory(getPathField(type), t), type)
+        changePath(type)
+    }
+
+    private fun Slash(t: OSType): String {
+        return if (t == OSType.Windows) "\\" else "/"
+    }
+
+    private fun changePath(t: DirectoryType) {
+        selectedDirIndex = -1
+        if (t == DirectoryType.Local) {
+            changeLocalFilePath()
+        } else {
+            changeRemoteFilePath()
+        }
+    }
+
+    private fun getPathField(t: DirectoryType): String {
+        return if (t == DirectoryType.Local) gui.localPathField else gui.remotePathField
+    }
+
+    private fun getPath(t: DirectoryType): String {
+        return if (t == DirectoryType.Local) {
+            addEndSlashIfNotPresent(gui.localPathField, localSystemType)
+        } else {
+            addEndSlashIfNotPresent(gui.remotePathField, remoteSystemType)
+        }
+    }
+
+    private fun setFilePathField(path: String, t: DirectoryType) {
+        if (t == DirectoryType.Local) {
+            gui.setLocalPath(path)
+        } else {
+            gui.setRemotePath(path)
+        }
+    }
+
+    private fun setFileNameField(name: String, t: DirectoryType) {
+        if (t == DirectoryType.Local) {
+            gui.localFileNameField = name
+        } else {
+            gui.setRemoteFileNameField(name)
+        }
+    }
+
+    private fun ParentDirectory(dir: String, t: OSType): String {
+        var parent = dir
+        val offset = dir.lastIndexOf(Slash(t))
+        if (t == OSType.Windows) {
+            if (offset != -1) {
+                parent = dir.substring(0, offset)
+            }
+        } else {
+            println("offset: $offset")
+            if (offset > 0) {
+                parent = dir.substring(0, offset)
+            }
+            if (offset == 0) {
+                parent = dir.substring(0, 1)
+            }
+        }
+        return parent
+    }
+
+    private fun logEvent(log: String) {
+        logWriter.log(log)
+        statusLog.append(log).append("\n")
+        gui.setStatusField(statusLog.toString())
+    }
+
+    private fun getFile(path: String, name: String, type: DirectoryType): File? {
+        var path = path
+        path = getPath(type)
+        return if (type == DirectoryType.Local) File(path + name) else null
+    }
+
+    enum class OSType {
+        Windows, Linux
+    }
+
+    companion object {
+        fun getSelectedItem(index: Int): JSONObject? {
+            val parser = JSONParser()
+
+            try {
+                FileReader("entries.json").use { reader ->
+                    val obj = parser.parse(reader)
+                    val jsonArray = obj as JSONArray
+                    if (index >= 0 && index < jsonArray.size) {
+                        return jsonArray[index] as JSONObject?
+                    } else {
+                        System.err.println("Index out of bounds or file is empty.")
+                        return null
+                    }
+                }
+            } catch (e: IOException) {
+                e.printStackTrace()
+                return null
+            } catch (e: ParseException) {
+                e.printStackTrace()
+                return null
+            }
+        }
+
+        fun getCommonFileList(path: String?): List<FileCommon> {
+            val fileList: MutableList<FileCommon> = ArrayList()
+
+            val list = File(path).listFiles()
+            if (list != null) {
+                for (f in list) {
+                    if (f.isDirectory) {
+                        val filec: FileCommon = FileFile(f)
+                        fileList.add(filec)
+                    }
+                }
+                for (f in list) {
+                    if (f.isFile) {
+                        val filec: FileCommon = FileFile(f)
+                        fileList.add(filec)
+                    }
+                }
+            }
+            return fileList
+        }
+    }
 }
