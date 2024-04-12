@@ -38,5 +38,6 @@
     <orderEntry type="library" name="googlecode.json.simple" level="project" />
     <orderEntry type="library" name="itest.json.simple.parser" level="project" />
     <orderEntry type="library" name="JediTerm" level="project" />
+    <orderEntry type="library" name="KotlinJavaRuntime" level="project" />
   </component>
 </module>

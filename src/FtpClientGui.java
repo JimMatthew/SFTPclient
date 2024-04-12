@@ -1,11 +1,10 @@
 import javax.swing.*;
 import javax.swing.border.LineBorder;
-import javax.swing.text.BadLocationException;
+
 import files.FileCommon;
 import java.awt.*;
 import java.awt.event.MouseAdapter;
 import java.awt.event.MouseEvent;
-import java.util.ArrayList;
 import java.util.List;
 
 public class FtpClientGui extends JFrame {
@@ -267,7 +266,7 @@ public class FtpClientGui extends JFrame {
         btnDisconnect.addActionListener(event -> manager.disconnectRemoteHost());
         localPathField.addActionListener(event -> manager.changeLocalFilePath());
         remotePathField.addActionListener(event -> manager.changeRemoteFilePath());
-        btnOpenLocalFile.addActionListener(event -> manager.openFilePressed(DirectoryType.Local));
+        btnOpenLocalFile.addActionListener(event -> manager.openFilePressed());
         btnOpenLocalFileInDefaultApp.addActionListener(event -> manager.openFileDefaultPressed(DirectoryType.Local));
         localParentBtn.addActionListener(event -> manager.parentPressed(DirectoryType.Local, manager.localSystemType()));
         remoteParentBtn.addActionListener(event -> manager.parentPressed(DirectoryType.Remote, manager.remoteSystemType()));

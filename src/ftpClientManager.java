@@ -182,16 +182,7 @@ public class ftpClientManager {
 			new Thread(() -> {
 				if (connector.downloadFile(rPath, lPath)) {
 					logEvent(gui.getRemoteFilenameField() + " was downloaded successfully");
-					fileViewer fileViewer = new fileViewer();
-					fileViewer.addWindowListener(new WindowAdapter() {
-						@Override
-						public void windowClosed(WindowEvent e) {
-							changeLocalFilePath();
-							System.out.println("A has closed");
-						}
-					});
-					File file = new File(System.getProperty("java.io.tmpdir") + File.separator + "tempf");
-					fileViewer.openFile(file);
+					openFile(System.getProperty("java.io.tmpdir") + File.separator + "tempf");
 				} else {
 					logEvent("Error Downloading File");
 				}
@@ -201,7 +192,11 @@ public class ftpClientManager {
 		}
 	}
 
-	public void openFilePressed(DirectoryType type) {
+	public void openFilePressed() {
+		openFile(getPath(DirectoryType.Local)+gui.getLocalFileNameField());
+    }
+
+	public void openFile(String filename) {
 		fileViewer fileViewer = new fileViewer();
 		fileViewer.addWindowListener(new WindowAdapter() {
 
@@ -211,11 +206,9 @@ public class ftpClientManager {
 				System.out.println("A has closed");
 			}
 		});
-		if(type == DirectoryType.Local){
-			File file = new File(getPath(DirectoryType.Local)+gui.getLocalFileNameField());
-			new Thread(() -> fileViewer.openFile(file)).start();
-		}
-    }
+		File file = new File(filename);
+		new Thread(() -> fileViewer.openFile(file)).start();
+	}
 
 	public void openFileDefaultPressed(DirectoryType type) {
 		Desktop desktop = Desktop.getDesktop();

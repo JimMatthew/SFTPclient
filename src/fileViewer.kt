@@ -1,175 +1,181 @@
-import javax.swing.*;
-import javax.swing.border.Border;
-import java.awt.*;
-import java.io.File;
-import java.io.FileNotFoundException;
-import java.io.FileWriter;
-import java.io.IOException;
-import java.nio.file.Files;
-import java.nio.file.Paths;
-import java.util.HexFormat;
-import java.util.Scanner;
-import java.util.stream.Stream;
+import java.awt.BorderLayout
+import java.awt.Color
+import java.awt.Dimension
+import java.awt.GridLayout
+import java.awt.event.ActionEvent
+import java.io.File
+import java.io.FileNotFoundException
+import java.io.FileWriter
+import java.io.IOException
+import java.nio.file.Files
+import java.nio.file.Paths
+import java.util.*
+import javax.swing.*
 
-public class fileViewer extends JFrame {
+class fileViewer() : JFrame() {
+    private val textArea: JTextArea
+    val mntm: JMenuItem
+    val miOpen: JMenuItem
+    val miSave: JMenuItem
+    val miSaveas: JMenuItem
+    val miEdit: JMenuItem
+    val miEditoff: JMenuItem
+    val miFont: JMenuItem
+    val miHex: JMenuItem
+    private var currFile: File? = null
+    var hex: String = ""
+    val scrollPane: JScrollPane
 
-    private static final long serialVersionUID = -1144784482245041604L;
-    private final JTextArea textArea;
-    final JMenuItem mntm;
-    final JMenuItem miOpen;
-    final JMenuItem miSave;
-    final JMenuItem miSaveas;
-    final JMenuItem miEdit;
-    final JMenuItem miEditoff;
-    final JMenuItem miFont;
-    final JMenuItem miHex;
-    private File currFile;
-    String hex = "";
-    final JScrollPane scrollPane;
+    init {
+        title = "FTP Client"
+        defaultCloseOperation = DISPOSE_ON_CLOSE
+        val layout = GridLayout(1, 1)
+        isResizable = true
+        preferredSize = Dimension(800, 1000)
+        pack()
+        contentPane.layout = BorderLayout(0, 0)
+        textArea = JTextArea()
+        textArea.wrapStyleWord = true
+        textArea.lineWrap = true
+        textArea.foreground = Color(0, 0, 0)
+        textArea.isEditable = false
 
-    public fileViewer() {
-        setTitle("FTP Client");
-        setDefaultCloseOperation(JFrame.DISPOSE_ON_CLOSE);
-        GridLayout layout = new GridLayout(1, 1);
-        setResizable(true);
-        setPreferredSize(new Dimension(800, 1000));
-        pack();
-        getContentPane().setLayout(new BorderLayout(0, 0));
-        textArea = new JTextArea();
-        textArea.setWrapStyleWord(true);
-        textArea.setLineWrap(true);
-        textArea.setForeground(new Color(0, 0, 0));
-        textArea.setEditable(false);
+        val border = BorderFactory.createLineBorder(Color.BLACK)
+        textArea.border = BorderFactory.createCompoundBorder(border, BorderFactory.createEmptyBorder(10, 10, 10, 10))
+        scrollPane = JScrollPane(textArea)
+        contentPane.add(scrollPane, BorderLayout.CENTER)
+        setLocationRelativeTo(null)
+        val menuBar = JMenuBar()
+        jMenuBar = menuBar
 
-        Border border = BorderFactory.createLineBorder(Color.BLACK);
-        textArea.setBorder(BorderFactory.createCompoundBorder(border, BorderFactory.createEmptyBorder(10, 10, 10, 10)));
-        scrollPane = new JScrollPane(textArea);
-        getContentPane().add(scrollPane, BorderLayout.CENTER);
-        setLocationRelativeTo(null);
-        JMenuBar menuBar = new JMenuBar();
-        setJMenuBar(menuBar);
-
-        JMenu mnNewMenu = new JMenu("menu");
-        menuBar.add(mnNewMenu);
-        mntm = new JMenuItem("About");
-        miOpen = new JMenuItem("Open");
-        miSave = new JMenuItem("Save");
-        miSaveas = new JMenuItem("Save As");
-        miEdit = new JMenuItem("Enable Editing");
-        miEditoff = new JMenuItem("Disable Editing");
-        miFont = new JMenuItem("Font");
-        miHex = new JMenuItem("Hex");
-        mnNewMenu.add(mntm);
-        mnNewMenu.add(miOpen);
-        mnNewMenu.add(miSave);
-        mnNewMenu.add(miSaveas);
-        JMenu mnNewMenu1 = new JMenu("Mode");
-        mnNewMenu1.add(miEdit);
-        mnNewMenu1.add(miEditoff);
-        JMenu mnNewMenu2 = new JMenu("View");
-        mnNewMenu2.add(miFont);
-        mnNewMenu2.add(miHex);
-        menuBar.add(mnNewMenu1);
-        menuBar.add(mnNewMenu2);
-        miEdit.addActionListener(event -> textArea.setEditable(true));
-        miEditoff.addActionListener(event -> textArea.setEditable(false));
-        miSaveas.addActionListener(event -> saveAs());
-        miSave.addActionListener(event -> saveFile(currFile));
-        miHex.addActionListener(event -> textArea.setText(stringToHex(textArea.getText())));
-        miFont.addActionListener(event -> {new FontPicker();});
+        val mnNewMenu = JMenu("menu")
+        menuBar.add(mnNewMenu)
+        mntm = JMenuItem("About")
+        miOpen = JMenuItem("Open")
+        miSave = JMenuItem("Save")
+        miSaveas = JMenuItem("Save As")
+        miEdit = JMenuItem("Enable Editing")
+        miEditoff = JMenuItem("Disable Editing")
+        miFont = JMenuItem("Font")
+        miHex = JMenuItem("Hex")
+        mnNewMenu.add(mntm)
+        mnNewMenu.add(miOpen)
+        mnNewMenu.add(miSave)
+        mnNewMenu.add(miSaveas)
+        val mnNewMenu1 = JMenu("Mode")
+        mnNewMenu1.add(miEdit)
+        mnNewMenu1.add(miEditoff)
+        val mnNewMenu2 = JMenu("View")
+        mnNewMenu2.add(miFont)
+        mnNewMenu2.add(miHex)
+        menuBar.add(mnNewMenu1)
+        menuBar.add(mnNewMenu2)
+        miEdit.addActionListener { textArea.isEditable = true }
+        miEditoff.addActionListener { textArea.isEditable = false }
+        miSaveas.addActionListener { saveAs() }
+        miSave.addActionListener { saveFile(currFile) }
+        miHex.addActionListener { textArea.text = stringToHex(textArea.text) }
+        miFont.addActionListener { FontPicker() }
     }
 
-    public fileViewer(File file) throws FileNotFoundException {
-        this();
-        openFile(file);
+    constructor(file: File) : this() {
+        openFile(file)
     }
 
-    private void saveAs() {
-        JFileChooser fileChooser = new JFileChooser();
+    private fun saveAs() {
+        val fileChooser = JFileChooser()
         if (fileChooser.showSaveDialog(miSaveas) == JFileChooser.APPROVE_OPTION) {
-            File file = fileChooser.getSelectedFile();
+            val file = fileChooser.selectedFile
 
-            saveFile(file);
+            saveFile(file)
         }
     }
 
-    public void openFile3(File file) throws FileNotFoundException {
-        currFile = file;
-        System.out.print("open file");
-        StringBuilder sb = new StringBuilder();
-        try (Scanner sc = new Scanner(file)) {
-            while (sc.hasNextLine()) {
-                sb.append(sc.nextLine()).append('\n');
+    @Throws(FileNotFoundException::class)
+    fun openFile3(file: File) {
+        currFile = file
+        print("open file")
+        val sb = StringBuilder()
+        try {
+            Scanner(file).use { sc ->
+                while (sc.hasNextLine()) {
+                    sb.append(sc.nextLine()).append('\n')
+                }
             }
-        } catch (FileNotFoundException e) {
-            dispose();
-            throw e;
+        } catch (e: FileNotFoundException) {
+            dispose()
+            throw e
         }
-        setTitle(file.getName());
-        setVisible(true);
-        textArea.setText(sb.toString());
+        title = file.name
+        isVisible = true
+        textArea.text = sb.toString()
     }
 
-    public void openFile(File file) {
-        currFile = file;
+    fun openFile(file: File) {
+        currFile = file
 
-        System.out.print("open file");
-        StringBuilder sb = new StringBuilder();
-        try (Stream<String> lines = Files.lines(Paths.get(file.getPath()))) {
-            lines.forEach(line -> sb.append(line).append("\n"));
-        } catch (IOException e) {
-            e.printStackTrace();
-        }
-        setTitle(file.getName());
-        setVisible(true);
-        textArea.setText(sb.toString());
-    }
-
-    private void saveFile(File file) {
-        FileWriter writer;
+        print("open file")
+        val sb = StringBuilder()
         try {
-            writer = new FileWriter(file);
-            writer.write(textArea.getText());
-            writer.flush();
-            writer.close();
-        } catch (IOException e) {
-            e.printStackTrace();
+            Files.lines(Paths.get(file.path)).use { lines ->
+                lines.forEach { line: String? -> sb.append(line).append("\n") }
+            }
+        } catch (e: IOException) {
+            e.printStackTrace()
         }
-
+        title = file.name
+        isVisible = true
+        textArea.text = sb.toString()
     }
 
-    private void saveFile(String file, String data) {
+    private fun saveFile(file: File?) {
+        if (file != null){
+            val writer: FileWriter
+            try {
+                writer = FileWriter(file)
+                writer.write(textArea.text)
+                writer.flush()
+                writer.close()
+            } catch (e: IOException) {
+                e.printStackTrace()
+            }
+        }
+    }
+
+    private fun saveFile(file: String, data: String) {
         try {
-            Files.writeString(Paths.get(file), data);
-        } catch (IOException e) {
+            Files.writeString(Paths.get(file), data)
+        } catch (e: IOException) {
             // TODO Auto-generated catch block
-            e.printStackTrace();
+            e.printStackTrace()
         }
     }
 
-    private void showHex() {
-        String s = toHex(textArea.getText());
-        textArea.setText(s);
+    private fun showHex() {
+        val s = toHex(textArea.text)
+        textArea.text = s
     }
 
-    static String stringToHex(String string) {
-        StringBuilder buf = new StringBuilder(200);
-        for (char ch : string.toCharArray()) {
-            if (!buf.isEmpty())
-                buf.append(' ');
-            buf.append(String.format("%02x", (int) ch));
+    fun toHex(value: String): String {
+        textArea.wrapStyleWord = true
+        return HexFormat.of().formatHex(value.toByteArray())
+        //return "";
+    }
+
+    fun fromHex(value: String?): String {
+        return String(HexFormat.of().parseHex(value))
+        //return "";
+    }
+
+    companion object {
+        private const val serialVersionUID = -1144784482245041604L
+        fun stringToHex(string: String): String {
+            val buf = StringBuilder(200)
+            for (ch in string.toCharArray()) {
+                if (buf.isNotEmpty()) buf.append(' ')
+                buf.append(String.format("%02x", ch.code))
+            }
+            return buf.toString()
         }
-        return buf.toString();
-    }
-
-    public String toHex(String value) {
-        textArea.setWrapStyleWord(true);
-        return HexFormat.of().formatHex(value.getBytes());
-        //return "";
-    }
-
-    public String fromHex(String value) {
-        return new String(HexFormat.of().parseHex(value));
-        //return "";
     }
 }
