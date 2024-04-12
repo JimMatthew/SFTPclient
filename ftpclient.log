@@ -244,3 +244,18 @@
 2024/04/12 08:39:20 local System: Windows
 2024/04/12 08:39:30 Connected to openwrt.lan
 2024/04/12 08:39:44 Remote host Disconnected
+2024/04/12 08:55:11 local System: Windows
+2024/04/12 08:55:21 Connected to openwrt.lan
+2024/04/12 08:55:30 Error Downloading File
+2024/04/12 08:55:34 Error Downloading File
+2024/04/12 08:55:36 Error Downloading File
+2024/04/12 08:55:57 etherwake was downloaded sucessfully
+2024/04/12 08:56:04 Error Downloading File
+2024/04/12 08:57:05 local System: Windows
+2024/04/12 08:57:08 Connected to openwrt.lan
+2024/04/12 08:57:13 Error Downloading File
+2024/04/12 08:57:56 local System: Windows
+2024/04/12 08:57:58 Connected to openwrt.lan
+2024/04/12 08:58:03 dropbear was downloaded successfully
+2024/04/12 08:58:07 dhcp was downloaded successfully
+2024/04/12 08:58:10 Remote host Disconnected

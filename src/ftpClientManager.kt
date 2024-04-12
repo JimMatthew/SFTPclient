@@ -38,8 +38,8 @@ class ftpClientManager {
         for (c in gui.passwordField) {
             p.append(c)
         }
-        val proto = gui.connectionType
-        connectToServer(gui.hostField, gui.user, p.toString(), proto)
+        val proto = gui.getConnectionType()
+        connectToServer(gui.hostField.getText(), gui.user, p.toString(), proto)
     }
 
     fun connectToServer(server: String, user: String?, pass: String?, proto: Int) {
@@ -77,7 +77,7 @@ class ftpClientManager {
         for (c in gui.passwordField) {
             p.append(c)
         }
-        val jsonArray = getJsonArray(p, server, user)
+        val jsonArray = getJsonArray(p, server.getText(), user)
 
         try {
             FileWriter("entries.json").use { file ->
@@ -134,7 +134,7 @@ class ftpClientManager {
                             hostnames.add(hostname)
                         }
                     }
-                } catch (e: Exception) {
+                } catch (_: Exception) {
                 }
             }
             return hostnames.toTypedArray<String>()
@@ -163,12 +163,12 @@ class ftpClientManager {
 
     fun openRemoteFile() {
         if (connector != null) { // Ensure we don't attempt to use a null connector
-            val rPath = getPath(DirectoryType.Remote) + gui.remoteFilenameField
+            val rPath = getPath(DirectoryType.Remote) + gui.getRemoteFilenameField()
             val lPath = System.getProperty("java.io.tmpdir") + File.separator + "tempf"
 
             Thread {
                 if (connector!!.downloadFile(rPath, lPath)) {
-                    logEvent(gui.remoteFilenameField + " was downloaded successfully")
+                    logEvent(gui.getRemoteFilenameField() + " was downloaded successfully")
                     openFile(System.getProperty("java.io.tmpdir") + File.separator + "tempf")
                 } else {
                     logEvent("Error Downloading File")
@@ -200,7 +200,7 @@ class ftpClientManager {
     fun openFileDefaultPressed(type: DirectoryType) {
         val desktop = Desktop.getDesktop()
         try {
-            desktop.edit(getFile(getPathField(type), gui.localFileNameField, type))
+            desktop.edit(gui.localFileNameField?.let { getFile(getPathField(type), it, type) })
         } catch (e: IOException) {
             println(e)
             logEvent("Error Opening File")
@@ -212,7 +212,7 @@ class ftpClientManager {
             val localFile = gui.localFileNameField
             val remotePath = getPath(DirectoryType.Remote)
             val localPath = getPath(DirectoryType.Local)
-            val remoteFile = gui.remoteFilenameField
+            val remoteFile = gui.getRemoteFilenameField()
 
             if (connector!!.uploadFile(localPath + localFile, remoteFile, remotePath)) {
                 logEvent("$localFile was uploaded sucessfully!")
@@ -230,8 +230,8 @@ class ftpClientManager {
             val rPath = getPath(DirectoryType.Remote)
 
             Thread {
-                if (connector!!.downloadFile(rPath + gui.remoteFilenameField, lPath + gui.localFileNameField)) {
-                    logEvent(gui.remoteFilenameField + " was downloaded sucessfully")
+                if (connector!!.downloadFile(rPath + gui.getRemoteFilenameField(), lPath + gui.localFileNameField)) {
+                    logEvent(gui.getRemoteFilenameField() + " was downloaded sucessfully")
                     changeLocalFilePath()
                 } else {
                     logEvent("Error Downloading File")
@@ -242,7 +242,7 @@ class ftpClientManager {
         }
     }
 
-    fun addEndSlashIfNotPresent(path: String, t: OSType?): String {
+    private fun addEndSlashIfNotPresent(path: String, t: OSType?): String {
         var p = path
         val s = if (t == OSType.Windows) '\\' else '/'
         if (p.isNotEmpty() && p[p.length - 1] != s) {
@@ -289,14 +289,14 @@ class ftpClientManager {
     fun changeLocalFilePath() {
         val path = getPath(DirectoryType.Local)
         localFileCommonList = getCommonFileList(path)
-        gui.displayLocalFiles(localFileCommonList)
+        gui.displayLocalFiles(localFileCommonList!!)
     }
 
     fun changeRemoteFilePath() {
         if (connector != null) {
             try {
                 remoteFileCommonList = connector!!.getCommonFileList(getPath(DirectoryType.Remote))
-                gui.displayRemoteFiles(remoteFileCommonList)
+                (remoteFileCommonList as MutableList<FileCommon>?)?.let { gui.displayRemoteFiles(it) }
             } catch (e: IOException) {
                 e.printStackTrace()
             }
@@ -351,14 +351,14 @@ class ftpClientManager {
     }
 
     private fun getPathField(t: DirectoryType): String {
-        return if (t == DirectoryType.Local) gui.localPathField else gui.remotePathField
+        return if (t == DirectoryType.Local) gui.getLocalPathField() else gui.getRemotePathField()
     }
 
     private fun getPath(t: DirectoryType): String {
         return if (t == DirectoryType.Local) {
-            addEndSlashIfNotPresent(gui.localPathField, localSystemType)
+            addEndSlashIfNotPresent(gui.getLocalPathField(), localSystemType)
         } else {
-            addEndSlashIfNotPresent(gui.remotePathField, remoteSystemType)
+            addEndSlashIfNotPresent(gui.getRemotePathField(), remoteSystemType)
         }
     }
 
@@ -437,7 +437,7 @@ class ftpClientManager {
             }
         }
 
-        fun getCommonFileList(path: String?): List<FileCommon> {
+        fun getCommonFileList(path: String): List<FileCommon> {
             val fileList: MutableList<FileCommon> = ArrayList()
 
             val list = File(path).listFiles()

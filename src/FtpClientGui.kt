@@ -1,390 +1,398 @@
-import javax.swing.*;
-import javax.swing.border.LineBorder;
+import files.FileCommon
+import java.awt.Color
+import java.awt.Dimension
+import java.awt.Font
+import java.awt.event.ActionEvent
+import java.awt.event.MouseAdapter
+import java.awt.event.MouseEvent
+import javax.swing.*
+import javax.swing.border.LineBorder
+import kotlin.system.exitProcess
 
-import files.FileCommon;
-import java.awt.*;
-import java.awt.event.MouseAdapter;
-import java.awt.event.MouseEvent;
-import java.util.List;
+class FtpClientGui(private val manager: ftpClientManager) : JFrame() {
+    private val usernameField: JTextField
+    val hostField: JTextField
+    private val connectButton: JButton
+    private val mntmNewMenuItem: JMenuItem
+    private val remotePathField: JTextField
+    private val localPathField: JTextField
+    private val btnChangeLocalPath: JButton
+    private val btnChangeRemotePath: JButton
+    private val localFilenameField: JTextField
+    val remoteFilenameField: JTextField
+    private val btnUpload: JButton
+    private val btnDownload: JButton
+    private val btnSave: JButton
+    private val btnConnectSaved: JButton
+    private val statusTextArea: JTextArea
+    private val btnDisconnect: JButton
+    private val btnMakeLocalDir: JButton
+    private val btnMakeRemoteDir: JButton
+    private val btnOpenRemoteFile: JButton
+    private val passField: JPasswordField
+    private val btnOpenLocalFile: JButton
+    private val mntmNewMenuItem2: JMenuItem
+    private val btnOpenLocalFileInDefaultApp: JButton
+    val connectionType = arrayOf("FTP", "SFTP", "FTP -jftp")
+    private val ctypeComboBox = JComboBox(connectionType)
+    private val savedCombobox: JComboBox<String>
+    private val localDispPanel: JPanel
+    private val remoteDispPanel: JPanel
+    private val localParentBtn: JButton
+    private val remoteParentBtn: JButton
+    private var remoteTable: JTable? = null
+    private var localTable: JTable? = null
+    private var localDisplayTable: DisplayTable? = null
+    private var remoteDisplayTable: DisplayTable? = null
 
-public class FtpClientGui extends JFrame {
-   
-	private static final long serialVersionUID = 1L;
-	private final JTextField usernameField;
-    private final JTextField hostField;
-    private final JButton connectButton;
-    private final JMenuItem mntmNewMenuItem;
-    private final ftpClientManager manager;
-    private final JTextField remotePathField;
-    private final JTextField localPathField;
-    private final JButton btnChangeLocalPath;
-    private final JButton btnChangeRemotePath;
-    private final JTextField localFilenameField;
-    private final JTextField remoteFilenameField;
-    private final JButton btnUpload;
-    private final JButton btnDownload;
-    private final JButton btnSave;
-    private JButton btnConnectSaved;
-    private final JTextArea statusTextArea;
-    private final JButton btnDisconnect;
-    private final JButton btnMakeLocalDir;
-    private final JButton btnMakeRemoteDir;
-    private JButton btnOpenRemoteFile;
-    private final JPasswordField passField;
-    private final JButton btnOpenLocalFile;
-    private final JMenuItem mntmNewMenuItem2;
-    private final JButton btnOpenLocalFileInDefaultApp;
-    private final String[] connectionType = {"FTP", "SFTP", "FTP -jftp"};
-    private final JComboBox<String> ctypeComboBox = new JComboBox<>(connectionType);
-    private JComboBox<String> savedCombobox;
-    private final JPanel localDispPanel;
-    private final JPanel remoteDispPanel;
-    private final JButton localParentBtn;
-    private final JButton remoteParentBtn;
-    private JTable remoteTable;
-    private JTable localTable;
-    private DisplayTable localDisplayTable;
-    private DisplayTable remoteDisplayTable;
-
-    public FtpClientGui(ftpClientManager manager) {
-        this.manager = manager;
-        
+    init {
         try {
             //UIManager.setLookAndFeel(UIManager.getCrossPlatformLookAndFeelClassName());
             // If you want the System L&F instead, comment out the above line and
             // uncomment the following:
-             UIManager.setLookAndFeel(UIManager.getSystemLookAndFeelClassName());
-        } catch (Exception exc) {
-            System.err.println("Error loading L&F: " + exc);
+            UIManager.setLookAndFeel(UIManager.getSystemLookAndFeelClassName())
+        } catch (exc: Exception) {
+            System.err.println("Error loading L&F: $exc")
         }
-        setTitle("JFTP Client");
-        setDefaultCloseOperation(JFrame.EXIT_ON_CLOSE);
-        setResizable(true);
-        setPreferredSize(new Dimension(1000, 910));
-        pack();
-        getContentPane().setLayout(null);
-        setLocationRelativeTo(null);
+        title = "JFTP Client"
+        defaultCloseOperation = EXIT_ON_CLOSE
+        isResizable = true
+        preferredSize = Dimension(1000, 910)
+        pack()
+        contentPane.layout = null
+        setLocationRelativeTo(null)
 
-        usernameField = SwingFactory.newField();
-        usernameField.setBounds(111, 79, 106, 20);
-        getContentPane().add(usernameField);
-        usernameField.setColumns(10);
+        usernameField = SwingFactory.newField()
+        usernameField.setBounds(111, 79, 106, 20)
+        contentPane.add(usernameField)
+        usernameField.columns = 10
 
-        hostField = SwingFactory.newField();
-        hostField.setBounds(111, 48, 106, 20);
-        getContentPane().add(hostField);
-        hostField.setColumns(10);
+        hostField = SwingFactory.newField()
+        hostField.setBounds(111, 48, 106, 20)
+        contentPane.add(hostField)
+        hostField.columns = 10
 
-        connectButton = SwingFactory.newButton("Connect");
-        connectButton.setBounds(255, 109, 115, 23);
-        getContentPane().add(connectButton);
+        connectButton = SwingFactory.newButton("Connect")
+        connectButton.setBounds(255, 109, 115, 23)
+        contentPane.add(connectButton)
 
-        btnSave = SwingFactory.newButton("Save");
-        btnSave.setBounds(255, 141, 115, 23);
-        getContentPane().add(btnSave);
+        btnSave = SwingFactory.newButton("Save")
+        btnSave.setBounds(255, 141, 115, 23)
+        contentPane.add(btnSave)
 
-        btnConnectSaved = SwingFactory.newButton("Connect");
-        btnConnectSaved.setBounds(255, 171, 115, 23);
-        getContentPane().add(btnConnectSaved);
+        btnConnectSaved = SwingFactory.newButton("Connect")
+        btnConnectSaved.setBounds(255, 171, 115, 23)
+        contentPane.add(btnConnectSaved)
 
-        ctypeComboBox.setBounds(111, 141, 106, 23);
-        getContentPane().add(ctypeComboBox);
+        ctypeComboBox.setBounds(111, 141, 106, 23)
+        contentPane.add(ctypeComboBox)
 
-        String[] savedServers = {};
-        savedCombobox = new JComboBox<>(savedServers);
-        savedCombobox.setBounds(111, 171, 106, 23);
-        getContentPane().add(savedCombobox);
+        val savedServers = arrayOf<String>()
+        savedCombobox = JComboBox(savedServers)
+        savedCombobox.setBounds(111, 171, 106, 23)
+        contentPane.add(savedCombobox)
 
-        JMenuBar menuBar = new JMenuBar();
-        menuBar.setBounds(0, 0, 986, 22);
-        getContentPane().add(menuBar);
+        val menuBar = JMenuBar()
+        menuBar.setBounds(0, 0, 986, 22)
+        contentPane.add(menuBar)
 
-        JMenu mnNewMenu = new JMenu("Menu");
-        menuBar.add(mnNewMenu);
+        val mnNewMenu = JMenu("Menu")
+        menuBar.add(mnNewMenu)
 
-        mntmNewMenuItem = new JMenuItem("About");
-        mnNewMenu.add(mntmNewMenuItem);
-        
-        mntmNewMenuItem2 = new JMenuItem("Exit");
-        mnNewMenu.add(mntmNewMenuItem2);
+        mntmNewMenuItem = JMenuItem("About")
+        mnNewMenu.add(mntmNewMenuItem)
 
-        JLabel lblHost = new JLabel("Server");
-        lblHost.setFont(new Font("Tahoma", Font.BOLD, 11));
-        lblHost.setBounds(20, 50, 70, 14);
-        getContentPane().add(lblHost);
+        mntmNewMenuItem2 = JMenuItem("Exit")
+        mnNewMenu.add(mntmNewMenuItem2)
 
-        JLabel lblUser = new JLabel("User Name");
-        lblUser.setFont(new Font("Tahoma", Font.BOLD, 11));
-        lblUser.setBounds(20, 82, 81, 14);
-        getContentPane().add(lblUser);
+        val lblHost = JLabel("Server")
+        lblHost.font = Font("Tahoma", Font.BOLD, 11)
+        lblHost.setBounds(20, 50, 70, 14)
+        contentPane.add(lblHost)
 
-        JLabel lblPassword = new JLabel("Password");
-        lblPassword.setFont(new Font("Tahoma", Font.BOLD, 11));
-        lblPassword.setBounds(20, 113, 70, 14);
-        getContentPane().add(lblPassword);
-        
-        remoteDispPanel = new JPanel();
-        remoteDispPanel.setBounds(510, 331, 460, 490);
-        getContentPane().add(remoteDispPanel);
-        
-        remotePathField = new JTextField();
-        remotePathField.setBorder(new LineBorder(Color.GRAY));
-        remotePathField.setBounds(670, 270, 294, 20);
-        getContentPane().add(remotePathField);
-        remotePathField.setColumns(10);
+        val lblUser = JLabel("User Name")
+        lblUser.font = Font("Tahoma", Font.BOLD, 11)
+        lblUser.setBounds(20, 82, 81, 14)
+        contentPane.add(lblUser)
 
-        JLabel lblPath = new JLabel("Path");
-        lblPath.setBounds(635, 273, 49, 14);
-        getContentPane().add(lblPath);
+        val lblPassword = JLabel("Password")
+        lblPassword.font = Font("Tahoma", Font.BOLD, 11)
+        lblPassword.setBounds(20, 113, 70, 14)
+        contentPane.add(lblPassword)
 
-        localDispPanel = new JPanel();
-        localDispPanel.setBounds(10, 331, 460, 489);
-        getContentPane().add(localDispPanel);
-        
-        localPathField = new JTextField();
-        localPathField.setBorder(new LineBorder(Color.GRAY, 1, true));
-        localPathField.setBounds(48, 267, 294, 20);
-        getContentPane().add(localPathField);
-        localPathField.setColumns(10);
+        remoteDispPanel = JPanel()
+        remoteDispPanel.setBounds(510, 331, 460, 490)
+        contentPane.add(remoteDispPanel)
 
-        JLabel lblPath_1 = new JLabel("Path");
-        lblPath_1.setBounds(15, 270, 49, 14);
-        getContentPane().add(lblPath_1);
+        remotePathField = JTextField()
+        remotePathField.border = LineBorder(Color.GRAY)
+        remotePathField.setBounds(670, 270, 294, 20)
+        contentPane.add(remotePathField)
+        remotePathField.columns = 10
 
-        btnChangeLocalPath = SwingFactory.newButton("Change");
-        btnChangeLocalPath.setBounds(361, 269, 89, 23);
-        getContentPane().add(btnChangeLocalPath);
+        val lblPath = JLabel("Path")
+        lblPath.setBounds(635, 273, 49, 14)
+        contentPane.add(lblPath)
 
-        btnChangeRemotePath = SwingFactory.newButton("Change");
-        btnChangeRemotePath.setBounds(524, 269, 89, 23);
-        getContentPane().add(btnChangeRemotePath);
+        localDispPanel = JPanel()
+        localDispPanel.setBounds(10, 331, 460, 489)
+        contentPane.add(localDispPanel)
 
-        localFilenameField = SwingFactory.newField();
-        localFilenameField.setBounds(48, 300, 142, 20);
-        getContentPane().add(localFilenameField);
-        localFilenameField.setColumns(10);
+        localPathField = JTextField()
+        localPathField.border = LineBorder(Color.GRAY, 1, true)
+        localPathField.setBounds(48, 267, 294, 20)
+        contentPane.add(localPathField)
+        localPathField.columns = 10
 
-        btnOpenLocalFile = SwingFactory.newButton("Open File");
-        btnOpenLocalFile.setBounds(180, 831, 90, 23);
-        getContentPane().add(btnOpenLocalFile);
+        val lblPath_1 = JLabel("Path")
+        lblPath_1.setBounds(15, 270, 49, 14)
+        contentPane.add(lblPath_1)
 
-        btnOpenLocalFileInDefaultApp = SwingFactory.newButton("Open w/");
-        btnOpenLocalFileInDefaultApp.setBounds(280, 831, 90, 23);
-        getContentPane().add(btnOpenLocalFileInDefaultApp);
+        btnChangeLocalPath = SwingFactory.newButton("Change")
+        btnChangeLocalPath.setBounds(361, 269, 89, 23)
+        contentPane.add(btnChangeLocalPath)
 
-        JLabel lblFile = new JLabel("File");
-        lblFile.setBounds(15, 306, 37, 14);
-        getContentPane().add(lblFile);
+        btnChangeRemotePath = SwingFactory.newButton("Change")
+        btnChangeRemotePath.setBounds(524, 269, 89, 23)
+        contentPane.add(btnChangeRemotePath)
 
-        remoteFilenameField = SwingFactory.newField();
-        remoteFilenameField.setBounds(670, 300, 133, 20);
-        getContentPane().add(remoteFilenameField);
-        remoteFilenameField.setColumns(10);
+        localFilenameField = SwingFactory.newField()
+        localFilenameField.setBounds(48, 300, 142, 20)
+        contentPane.add(localFilenameField)
+        localFilenameField.columns = 10
 
-        JLabel lblFile_1 = new JLabel("File");
-        lblFile_1.setBounds(635, 306, 44, 14);
-        getContentPane().add(lblFile_1);
+        btnOpenLocalFile = SwingFactory.newButton("Open File")
+        btnOpenLocalFile.setBounds(180, 831, 90, 23)
+        contentPane.add(btnOpenLocalFile)
 
-        btnUpload = SwingFactory.newButton("->");
-        btnUpload.setBounds(361, 297, 89, 23);
-        getContentPane().add(btnUpload);
+        btnOpenLocalFileInDefaultApp = SwingFactory.newButton("Open w/")
+        btnOpenLocalFileInDefaultApp.setBounds(280, 831, 90, 23)
+        contentPane.add(btnOpenLocalFileInDefaultApp)
 
-        btnDownload = SwingFactory.newButton("<-");
-        btnDownload.setBounds(524, 297, 89, 23);
-        getContentPane().add(btnDownload);
+        val lblFile = JLabel("File")
+        lblFile.setBounds(15, 306, 37, 14)
+        contentPane.add(lblFile)
 
-        JTextField statusField = new JTextField();
+        remoteFilenameField = SwingFactory.newField()
+        remoteFilenameField.setBounds(670, 300, 133, 20)
+        contentPane.add(remoteFilenameField)
+        remoteFilenameField.columns = 10
 
-        statusTextArea = new JTextArea();
-        statusTextArea.setBounds(720, 48, 242, 90);
-        statusTextArea.setBorder(new LineBorder(Color.GRAY));
-        statusTextArea.setEditable(false);
-        getContentPane().add(statusField);
+        val lblFile_1 = JLabel("File")
+        lblFile_1.setBounds(635, 306, 44, 14)
+        contentPane.add(lblFile_1)
 
-        JScrollPane StatusScrollPane = new JScrollPane(statusTextArea);
-        StatusScrollPane.setBounds(635, 46, 329, 140);
-        getContentPane().add(StatusScrollPane);
+        btnUpload = SwingFactory.newButton("->")
+        btnUpload.setBounds(361, 297, 89, 23)
+        contentPane.add(btnUpload)
 
-        btnDisconnect = SwingFactory.newButton("Disconnect");
-        btnDisconnect.setBounds(255, 76, 115, 23);
-        getContentPane().add(btnDisconnect);
+        btnDownload = SwingFactory.newButton("<-")
+        btnDownload.setBounds(524, 297, 89, 23)
+        contentPane.add(btnDownload)
 
-        btnMakeLocalDir = SwingFactory.newButton("Make Directory");
-        btnMakeLocalDir.setFont(new Font("Tahoma", Font.PLAIN, 10));
-        btnMakeLocalDir.setBounds(20, 831, 113, 23);
-        getContentPane().add(btnMakeLocalDir);
+        val statusField = JTextField()
 
-        btnMakeRemoteDir = SwingFactory.newButton("Make Directory");
-        btnMakeRemoteDir.setFont(new Font("Tahoma", Font.PLAIN, 10));
-        btnMakeRemoteDir.setBounds(534, 832, 113, 23);
-        getContentPane().add(btnMakeRemoteDir);
+        statusTextArea = JTextArea()
+        statusTextArea.setBounds(720, 48, 242, 90)
+        statusTextArea.border = LineBorder(Color.GRAY)
+        statusTextArea.isEditable = false
+        contentPane.add(statusField)
 
-        btnOpenRemoteFile = SwingFactory.newButton("Open File");
-        btnOpenRemoteFile.setFont(new Font("Tahoma", Font.PLAIN, 10));
-        btnOpenRemoteFile.setBounds(700, 832, 113, 23);
-        getContentPane().add(btnOpenRemoteFile);
+        val StatusScrollPane = JScrollPane(statusTextArea)
+        StatusScrollPane.setBounds(635, 46, 329, 140)
+        contentPane.add(StatusScrollPane)
 
-        passField = new JPasswordField();
-        passField.setBorder(new LineBorder(Color.GRAY));
-        passField.setBounds(111, 110, 106, 20);
-        getContentPane().add(passField);
-        
-        JLabel lblProtocol = new JLabel("Protocol");
-        lblProtocol.setFont(new Font("Tahoma", Font.BOLD, 11));
-        lblProtocol.setBounds(20, 146, 70, 14);
-        getContentPane().add(lblProtocol);
+        btnDisconnect = SwingFactory.newButton("Disconnect")
+        btnDisconnect.setBounds(255, 76, 115, 23)
+        contentPane.add(btnDisconnect)
 
-        JLabel lblSaved = new JLabel("Saved");
-        lblSaved.setFont(new Font("Tahoma", Font.BOLD, 11));
-        lblSaved.setBounds(20, 175, 70, 14);
-        getContentPane().add(lblSaved);
+        btnMakeLocalDir = SwingFactory.newButton("Make Directory")
+        btnMakeLocalDir.font = Font("Tahoma", Font.PLAIN, 10)
+        btnMakeLocalDir.setBounds(20, 831, 113, 23)
+        contentPane.add(btnMakeLocalDir)
 
-        localParentBtn = new JButton("<-- back");
-        localParentBtn.setBounds(253, 298, 89, 23);
-        getContentPane().add(localParentBtn);
-        
-        remoteParentBtn = new JButton("<-- back");
-        remoteParentBtn.setBounds(875, 299, 89, 23);
-        getContentPane().add(remoteParentBtn);
-        updateSavedServerList();
-        revalidate();
-        repaint();
-        setVisible(true);
-        setAction();
+        btnMakeRemoteDir = SwingFactory.newButton("Make Directory")
+        btnMakeRemoteDir.font = Font("Tahoma", Font.PLAIN, 10)
+        btnMakeRemoteDir.setBounds(534, 832, 113, 23)
+        contentPane.add(btnMakeRemoteDir)
+
+        btnOpenRemoteFile = SwingFactory.newButton("Open File")
+        btnOpenRemoteFile.font = Font("Tahoma", Font.PLAIN, 10)
+        btnOpenRemoteFile.setBounds(700, 832, 113, 23)
+        contentPane.add(btnOpenRemoteFile)
+
+        passField = JPasswordField()
+        passField.border = LineBorder(Color.GRAY)
+        passField.setBounds(111, 110, 106, 20)
+        contentPane.add(passField)
+
+        val lblProtocol = JLabel("Protocol")
+        lblProtocol.font = Font("Tahoma", Font.BOLD, 11)
+        lblProtocol.setBounds(20, 146, 70, 14)
+        contentPane.add(lblProtocol)
+
+        val lblSaved = JLabel("Saved")
+        lblSaved.font = Font("Tahoma", Font.BOLD, 11)
+        lblSaved.setBounds(20, 175, 70, 14)
+        contentPane.add(lblSaved)
+
+        localParentBtn = JButton("<-- back")
+        localParentBtn.setBounds(253, 298, 89, 23)
+        contentPane.add(localParentBtn)
+
+        remoteParentBtn = JButton("<-- back")
+        remoteParentBtn.setBounds(875, 299, 89, 23)
+        contentPane.add(remoteParentBtn)
+        updateSavedServerList()
+        revalidate()
+        repaint()
+        isVisible = true
+        setAction()
     }
 
-    private void setAction() {
-        connectButton.addActionListener(event -> manager.connectPressed());
-        btnChangeLocalPath.addActionListener(event -> manager.changeLocalFilePath());
-        btnChangeRemotePath.addActionListener(event -> manager.changeRemoteFilePath());
-        btnUpload.addActionListener(event -> manager.uploadPressed());
-        btnDownload.addActionListener(event -> manager.downloadPressed());
-        mntmNewMenuItem.addActionListener(event -> manager.aboutPressed());
-        mntmNewMenuItem2.addActionListener(event -> System.exit(0));
-        btnMakeLocalDir.addActionListener(event -> manager.makeLocalDirectoryPressed());
-        btnMakeRemoteDir.addActionListener(event -> manager.makeRemoteDirectoryPressed());
-        btnDisconnect.addActionListener(event -> manager.disconnectRemoteHost());
-        localPathField.addActionListener(event -> manager.changeLocalFilePath());
-        remotePathField.addActionListener(event -> manager.changeRemoteFilePath());
-        btnOpenLocalFile.addActionListener(event -> manager.openFilePressed());
-        btnOpenLocalFileInDefaultApp.addActionListener(event -> manager.openFileDefaultPressed(DirectoryType.Local));
-        localParentBtn.addActionListener(event -> manager.parentPressed(DirectoryType.Local, manager.localSystemType()));
-        remoteParentBtn.addActionListener(event -> manager.parentPressed(DirectoryType.Remote, manager.remoteSystemType()));
-        btnSave.addActionListener(event -> manager.saveServer());
-        btnConnectSaved.addActionListener(event -> connectSaved());
-        btnOpenRemoteFile.addActionListener(event -> manager.openRemoteFile());
+    private fun setAction() {
+        connectButton.addActionListener { manager.connectPressed() }
+        btnChangeLocalPath.addActionListener { manager.changeLocalFilePath() }
+        btnChangeRemotePath.addActionListener { manager.changeRemoteFilePath() }
+        btnUpload.addActionListener { manager.uploadPressed() }
+        btnDownload.addActionListener { manager.downloadPressed() }
+        mntmNewMenuItem.addActionListener { manager.aboutPressed() }
+        mntmNewMenuItem2.addActionListener { exitProcess(0) }
+        btnMakeLocalDir.addActionListener { manager.makeLocalDirectoryPressed() }
+        btnMakeRemoteDir.addActionListener { manager.makeRemoteDirectoryPressed() }
+        btnDisconnect.addActionListener { manager.disconnectRemoteHost() }
+        localPathField.addActionListener { manager.changeLocalFilePath() }
+        remotePathField.addActionListener { manager.changeRemoteFilePath() }
+        btnOpenLocalFile.addActionListener { manager.openFilePressed() }
+        btnOpenLocalFileInDefaultApp.addActionListener {
+            manager.openFileDefaultPressed(
+                DirectoryType.Local
+            )
+        }
+        localParentBtn.addActionListener {
+            manager.parentPressed(
+                DirectoryType.Local,
+                manager.localSystemType()
+            )
+        }
+        remoteParentBtn.addActionListener {
+            manager.parentPressed(
+                DirectoryType.Remote,
+                manager.remoteSystemType()
+            )
+        }
+        btnSave.addActionListener { manager.saveServer() }
+        btnConnectSaved.addActionListener { connectSaved() }
+        btnOpenRemoteFile.addActionListener { manager.openRemoteFile() }
     }
-    
-    private void setMouseListener(JTable table, DirectoryType t) {
-    	
-        MouseAdapter adapter = new MouseAdapter() {
-            public void mouseClicked(MouseEvent e) {
-                if (e.getButton() == MouseEvent.BUTTON1) {
-                    int r = ((JTable)e.getSource()).rowAtPoint(e.getPoint());
-                    manager.mouseClickOnItem(r, t);
+
+    private fun setMouseListener(table: JTable, t: DirectoryType) {
+        val adapter: MouseAdapter = object : MouseAdapter() {
+            override fun mouseClicked(e: MouseEvent) {
+                if (e.button == MouseEvent.BUTTON1) {
+                    val r = (e.source as JTable).rowAtPoint(e.point)
+                    manager.mouseClickOnItem(r, t)
                 }
             }
-        };
-        table.addMouseListener(adapter);
+        }
+        table.addMouseListener(adapter)
     }
 
-    private void connectSaved(){
-        int t = savedCombobox.getSelectedIndex();
-        manager.connectSavedServer(t);
+    private fun connectSaved() {
+        val t = savedCombobox.selectedIndex
+        manager.connectSavedServer(t)
     }
 
-    public String getUser() {
-        return usernameField.getText();
-    }
-    
-    public void displayRemoteFiles(List<FileCommon> fileList) {
-    	if (remoteTable == null) {
-    		remoteDisplayTable = new DisplayTable();
-    		remoteDisplayTable.updateFileTable(fileList);
-    		remoteTable = remoteDisplayTable.getDisplayTable();
-    		remoteDispPanel.add(new JScrollPane(remoteTable));
-    		remoteDispPanel.revalidate();
-    		setMouseListener(remoteTable, DirectoryType.Remote);
-    		
-    	} else {
-    		remoteDisplayTable.updateFileTable(fileList);
-    	}
-    }
-    
-    public void displayLocalFiles(List<FileCommon> fileList) {
-    	if (localTable == null) {
-    		localDisplayTable = new DisplayTable();
-    		localDisplayTable.updateFileTable(fileList);
-    		localTable = localDisplayTable.getDisplayTable();
-        	localDispPanel.add(new JScrollPane(localTable));
-        	setMouseListener(localTable, DirectoryType.Local);
-        	localDispPanel.revalidate();
-    	} else {
-    		localDisplayTable.updateFileTable(fileList);
-    	}
-    }
+    val user: String
+        get() = usernameField.text
 
-    public void updateSavedServerList() {
-        String[] array = manager.getAllHostnames();
-        //System.out.println(array[0]);
-        savedCombobox.removeAllItems();
-        for(String s : array){
-            savedCombobox.addItem(s);
+    fun displayRemoteFiles(fileList: List<FileCommon>) {
+        if (remoteTable == null) {
+            remoteDisplayTable = DisplayTable()
+            remoteDisplayTable!!.updateFileTable(fileList)
+            remoteTable = remoteDisplayTable!!.displayTable
+            remoteDispPanel.add(JScrollPane(remoteTable))
+            remoteDispPanel.revalidate()
+            setMouseListener(remoteTable!!, DirectoryType.Remote)
+        } else {
+            remoteDisplayTable!!.updateFileTable(fileList)
         }
     }
-    
-    public void remoteDisconnect() {
-    	remoteTable = null;
-    	remoteDispPanel.removeAll();
-    	remoteDispPanel.revalidate();
-    	remoteDispPanel.repaint();
+
+    fun displayLocalFiles(fileList: List<FileCommon>) {
+        if (localTable == null) {
+            localDisplayTable = DisplayTable()
+            localDisplayTable!!.updateFileTable(fileList)
+            localTable = localDisplayTable!!.displayTable
+            localDispPanel.add(JScrollPane(localTable))
+            setMouseListener(localTable!!, DirectoryType.Local)
+            localDispPanel.revalidate()
+        } else {
+            localDisplayTable!!.updateFileTable(fileList)
+        }
     }
 
-    public String getHostField() {
-        return hostField.getText();
+    fun updateSavedServerList() {
+        val array = manager.allHostnames
+        savedCombobox.removeAllItems()
+        for (s in array) {
+            savedCombobox.addItem(s)
+        }
     }
 
-    public void setLocalPath(String path) {
-        localPathField.setText(path);
+    fun remoteDisconnect() {
+        remoteTable = null
+        remoteDispPanel.removeAll()
+        remoteDispPanel.revalidate()
+        remoteDispPanel.repaint()
     }
 
-    public void setRemotePath(String path) {
-        remotePathField.setText(path);
+    fun getHostField(): String {
+        return hostField.text
     }
 
-    public String getLocalPathField() {
-        return localPathField.getText();
+    fun setLocalPath(path: String?) {
+        localPathField.text = path
     }
 
-    public String getRemotePathField() {
-        return remotePathField.getText();
+    fun setRemotePath(path: String?) {
+        remotePathField.text = path
     }
 
-    public String getLocalFileNameField() {
-        return localFilenameField.getText();
+    fun getLocalPathField(): String {
+        return localPathField.text
     }
 
-    public void setLocalFileNameField(String name) {
-        localFilenameField.setText(name);
+    fun getRemotePathField(): String {
+        return remotePathField.text
     }
 
-    public String getRemoteFilenameField() {
-        return remoteFilenameField.getText();
+    var localFileNameField: String?
+        get() = localFilenameField.text
+        set(name) {
+            localFilenameField.text = name
+        }
+
+    fun getRemoteFilenameField(): String {
+        return remoteFilenameField.text
     }
 
-    public void setRemoteFileNameField(String name) {
-        remoteFilenameField.setText(name);
+    fun setRemoteFileNameField(name: String?) {
+        remoteFilenameField.text = name
     }
 
-    public void setStatusField(String text) {
-        statusTextArea.setText(text);
-    }
-    
-    public int getConnectionType() {
-    	return ctypeComboBox.getSelectedIndex();
+    fun setStatusField(text: String?) {
+        statusTextArea.text = text
     }
 
-    public char[] getPasswordField() {
-        return passField.getPassword();
+    fun getConnectionType(): Int {
+        return ctypeComboBox.selectedIndex
+    }
+
+    val passwordField: CharArray
+        get() = passField.password
+
+    companion object {
+        private const val serialVersionUID = 1L
     }
 }
