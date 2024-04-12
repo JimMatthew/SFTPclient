@@ -1,0 +1,14 @@
+<component name="libraryTable">
+  <library name="itest.json.simple.parser" type="repository">
+    <properties maven-id="org.itest:itest-json-simple-parser:1.5.0" />
+    <CLASSES>
+      <root url="jar://$PROJECT_DIR$/lib/itest-json-simple-parser-1.5.0.jar!/" />
+      <root url="jar://$PROJECT_DIR$/lib/commons-lang-2.3.jar!/" />
+      <root url="jar://$PROJECT_DIR$/lib/itest-iface-1.5.0.jar!/" />
+      <root url="jar://$PROJECT_DIR$/lib/itest-util-1.5.0.jar!/" />
+      <root url="jar://$PROJECT_DIR$/lib/guava-15.0.jar!/" />
+    </CLASSES>
+    <JAVADOC />
+    <SOURCES />
+  </library>
+</component>

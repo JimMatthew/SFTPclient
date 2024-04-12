@@ -1,0 +1,16 @@
+<component name="libraryTable">
+  <library name="jediterm-master">
+    <CLASSES>
+      <root url="file://$PROJECT_DIR$/../jediterm-master" />
+    </CLASSES>
+    <JAVADOC />
+    <SOURCES>
+      <root url="file://$PROJECT_DIR$/../jediterm-master" />
+      <root url="file://$PROJECT_DIR$/../jediterm-master/JediTerm/src/main/java" />
+      <root url="file://$PROJECT_DIR$/../jediterm-master/core/src" />
+      <root url="file://$PROJECT_DIR$/../jediterm-master/core/tests/src" />
+      <root url="file://$PROJECT_DIR$/../jediterm-master/ui/src" />
+      <root url="file://$PROJECT_DIR$/../jediterm-master/ui/tests/src" />
+    </SOURCES>
+  </library>
+</component>

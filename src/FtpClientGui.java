@@ -1,12 +1,11 @@
 import javax.swing.*;
 import javax.swing.border.LineBorder;
 import javax.swing.text.BadLocationException;
-
 import files.FileCommon;
-
 import java.awt.*;
 import java.awt.event.MouseAdapter;
 import java.awt.event.MouseEvent;
+import java.util.ArrayList;
 import java.util.List;
 
 public class FtpClientGui extends JFrame {
@@ -25,16 +24,20 @@ public class FtpClientGui extends JFrame {
     private final JTextField remoteFilenameField;
     private final JButton btnUpload;
     private final JButton btnDownload;
+    private final JButton btnSave;
+    private JButton btnConnectSaved;
     private final JTextArea statusTextArea;
     private final JButton btnDisconnect;
     private final JButton btnMakeLocalDir;
     private final JButton btnMakeRemoteDir;
+    private JButton btnOpenRemoteFile;
     private final JPasswordField passField;
     private final JButton btnOpenLocalFile;
     private final JMenuItem mntmNewMenuItem2;
     private final JButton btnOpenLocalFileInDefaultApp;
     private final String[] connectionType = {"FTP", "SFTP", "FTP -jftp"};
     private final JComboBox<String> ctypeComboBox = new JComboBox<>(connectionType);
+    private JComboBox<String> savedCombobox;
     private final JPanel localDispPanel;
     private final JPanel remoteDispPanel;
     private final JButton localParentBtn;
@@ -55,7 +58,7 @@ public class FtpClientGui extends JFrame {
         } catch (Exception exc) {
             System.err.println("Error loading L&F: " + exc);
         }
-        setTitle("FTP Client2");
+        setTitle("JFTP Client");
         setDefaultCloseOperation(JFrame.EXIT_ON_CLOSE);
         setResizable(true);
         setPreferredSize(new Dimension(1000, 910));
@@ -76,9 +79,22 @@ public class FtpClientGui extends JFrame {
         connectButton = SwingFactory.newButton("Connect");
         connectButton.setBounds(255, 109, 115, 23);
         getContentPane().add(connectButton);
-        
-        ctypeComboBox.setBounds(111, 141, 96, 23);
+
+        btnSave = SwingFactory.newButton("Save");
+        btnSave.setBounds(255, 141, 115, 23);
+        getContentPane().add(btnSave);
+
+        btnConnectSaved = SwingFactory.newButton("Connect");
+        btnConnectSaved.setBounds(255, 171, 115, 23);
+        getContentPane().add(btnConnectSaved);
+
+        ctypeComboBox.setBounds(111, 141, 106, 23);
         getContentPane().add(ctypeComboBox);
+
+        String[] savedServers = {};
+        savedCombobox = new JComboBox<>(savedServers);
+        savedCombobox.setBounds(111, 171, 106, 23);
+        getContentPane().add(savedCombobox);
 
         JMenuBar menuBar = new JMenuBar();
         menuBar.setBounds(0, 0, 986, 22);
@@ -204,6 +220,11 @@ public class FtpClientGui extends JFrame {
         btnMakeRemoteDir.setBounds(534, 832, 113, 23);
         getContentPane().add(btnMakeRemoteDir);
 
+        btnOpenRemoteFile = SwingFactory.newButton("Open File");
+        btnOpenRemoteFile.setFont(new Font("Tahoma", Font.PLAIN, 10));
+        btnOpenRemoteFile.setBounds(700, 832, 113, 23);
+        getContentPane().add(btnOpenRemoteFile);
+
         passField = new JPasswordField();
         passField.setBorder(new LineBorder(Color.GRAY));
         passField.setBounds(111, 110, 106, 20);
@@ -213,7 +234,12 @@ public class FtpClientGui extends JFrame {
         lblProtocol.setFont(new Font("Tahoma", Font.BOLD, 11));
         lblProtocol.setBounds(20, 146, 70, 14);
         getContentPane().add(lblProtocol);
-        
+
+        JLabel lblSaved = new JLabel("Saved");
+        lblSaved.setFont(new Font("Tahoma", Font.BOLD, 11));
+        lblSaved.setBounds(20, 175, 70, 14);
+        getContentPane().add(lblSaved);
+
         localParentBtn = new JButton("<-- back");
         localParentBtn.setBounds(253, 298, 89, 23);
         getContentPane().add(localParentBtn);
@@ -221,11 +247,11 @@ public class FtpClientGui extends JFrame {
         remoteParentBtn = new JButton("<-- back");
         remoteParentBtn.setBounds(875, 299, 89, 23);
         getContentPane().add(remoteParentBtn);
+        updateSavedServerList();
         revalidate();
         repaint();
         setVisible(true);
         setAction();
-        
     }
 
     private void setAction() {
@@ -245,6 +271,9 @@ public class FtpClientGui extends JFrame {
         btnOpenLocalFileInDefaultApp.addActionListener(event -> manager.openFileDefaultPressed(DirectoryType.Local));
         localParentBtn.addActionListener(event -> manager.parentPressed(DirectoryType.Local, manager.localSystemType()));
         remoteParentBtn.addActionListener(event -> manager.parentPressed(DirectoryType.Remote, manager.remoteSystemType()));
+        btnSave.addActionListener(event -> manager.saveServer());
+        btnConnectSaved.addActionListener(event -> connectSaved());
+        btnOpenRemoteFile.addActionListener(event -> manager.openRemoteFile());
     }
     
     private void setMouseListener(JTable table, DirectoryType t) {
@@ -258,6 +287,11 @@ public class FtpClientGui extends JFrame {
             }
         };
         table.addMouseListener(adapter);
+    }
+
+    private void connectSaved(){
+        int t = savedCombobox.getSelectedIndex();
+        manager.connectSavedServer(t);
     }
 
     public String getUser() {
@@ -289,6 +323,15 @@ public class FtpClientGui extends JFrame {
     	} else {
     		localDisplayTable.updateFileTable(fileList);
     	}
+    }
+
+    public void updateSavedServerList() {
+        String[] array = manager.getAllHostnames();
+        //System.out.println(array[0]);
+        savedCombobox.removeAllItems();
+        for(String s : array){
+            savedCombobox.addItem(s);
+        }
     }
     
     public void remoteDisconnect() {

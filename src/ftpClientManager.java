@@ -1,13 +1,14 @@
 import files.FileCommon;
 import files.FileFile;
-
 import java.awt.*;
 import java.awt.event.WindowAdapter;
 import java.awt.event.WindowEvent;
-import java.io.File;
-import java.io.IOException;
+import java.io.*;
 import java.util.ArrayList;
 import java.util.List;
+import org.json.simple.JSONArray;
+import org.json.simple.JSONObject;
+import org.json.simple.parser.*;
 
 public class ftpClientManager {
 
@@ -38,25 +39,118 @@ public class ftpClientManager {
 			c = 0;
 		}
 		int proto = gui.getConnectionType();
+		connectToServer(gui.getHostField(), gui.getUser(), p.toString(), proto);
+	}
 
+	public void connectToServer(String server, String user, String pass, int proto){
 		connector = switch (proto) {
-		case 0 -> new FtpConnector(gui.getHostField(), gui.getUser(), p.toString());
-		case 1 -> new SftpConnector(gui.getHostField(), gui.getUser(), p.toString());
-		case 2 -> new JftpConnector(gui.getHostField(), gui.getUser(), p.toString());
-		default -> throw new IllegalArgumentException("Unexpected value: " + proto);
+			case 0 -> new FtpConnector(server, user, pass);
+			case 1 -> new SftpConnector(server, user, pass);
+			case 2 -> new JftpConnector(server, user, pass);
+			default -> throw new IllegalArgumentException("Unexpected value: " + proto);
 		};
 
 		new Thread(() -> {
 			if (connector.connect()) {
 				String remotePath = "/";
 				gui.setRemotePath(remotePath);
-				logEvent("Connected to " + gui.getHostField());
+				logEvent("Connected to " + server);
 				remoteSystemType = connector.getSystemType();
 				changeRemoteFilePath();
 			} else {
-				logEvent("Error Connecting to " + gui.getHostField());
+				logEvent("Error Connecting to " + server);
 			}
 		}).start();
+	}
+
+	public void connectSavedServer(int server) {
+		JSONObject o = getSelectedItem(server);
+		if (o != null){
+			connectToServer(o.get("server").toString(), o.get("user").toString(), o.get("pass").toString(),1);
+		}
+	}
+
+	public void saveServer() {
+		String server = gui.getHostField();
+		String user = gui.getUser();
+		StringBuilder p = new StringBuilder();
+		for (char c : gui.getPasswordField()) {
+			p.append(c);
+		}
+		JSONArray jsonArray = getJsonArray(p, server, user);
+
+		try (FileWriter file = new FileWriter("entries.json")) {
+			file.write(jsonArray.toJSONString());
+			file.flush();
+			System.out.println("Data has been written to " + "entries.json");
+		} catch (IOException e) {
+			e.printStackTrace();
+		}
+		gui.updateSavedServerList();
+    }
+
+	private JSONArray getJsonArray(StringBuilder p, String server, String user) {
+		String pass = p.toString();
+		int proto = gui.getConnectionType();
+
+		JSONObject entry = new JSONObject();
+		entry.put("server", server);
+		entry.put("user", user);
+		entry.put("pass", pass);
+		entry.put("proto", proto);
+
+		JSONArray jsonArray;
+		try {
+			FileReader fileReader = new FileReader("entries.json");
+			JSONParser jsonParser = new JSONParser();
+			jsonArray = (JSONArray) jsonParser.parse(fileReader);
+			fileReader.close();
+		} catch (IOException | ParseException e) {
+			// If file doesn't exist or can't be parsed, create a new JSONArray
+			jsonArray = new JSONArray();
+		}
+		jsonArray.add(entry);
+		return jsonArray;
+	}
+
+	public String[] getAllHostnames() {
+		JSONParser parser = new JSONParser();
+		ArrayList<String> hostnames = new ArrayList<>();
+
+		File file = new File("entries.json");
+		if (file.exists()){
+			try (FileReader reader = new FileReader("entries.json")) {
+				Object obj = parser.parse(reader);
+				JSONArray jsonArray = (JSONArray) obj;
+
+				for (Object item : jsonArray) {
+					JSONObject jsonObject = (JSONObject) item;
+					String hostname = (String) jsonObject.get("server");
+					hostnames.add(hostname);
+				}
+			} catch (Exception e) {
+			}
+		}
+		return hostnames.toArray(new String[0]);
+	}
+
+
+	public static JSONObject getSelectedItem(int index) {
+		JSONParser parser = new JSONParser();
+
+		try (FileReader reader = new FileReader("entries.json")) {
+			Object obj = parser.parse(reader);
+			JSONArray jsonArray = (JSONArray) obj;
+			if (index >= 0 && index < jsonArray.size()) {
+				return (JSONObject) jsonArray.get(index);
+			} else {
+				System.err.println("Index out of bounds or file is empty.");
+				return null;
+			}
+		} catch (IOException | ParseException e) {
+			e.printStackTrace();
+			return null;
+		}
 	}
 
 	public OSType remoteSystemType() {
@@ -79,6 +173,34 @@ public class ftpClientManager {
 		}
 	}
 
+	public void openRemoteFile() {
+
+		if (connector != null) { // Ensure we don't attempt to use a null connector
+			String rPath = getPath(DirectoryType.Remote) + gui.getRemoteFilenameField();
+			String lPath = System.getProperty("java.io.tmpdir") + File.separator + "tempf";
+
+			new Thread(() -> {
+				if (connector.downloadFile(rPath, lPath)) {
+					logEvent(gui.getRemoteFilenameField() + " was downloaded successfully");
+					fileViewer fileViewer = new fileViewer();
+					fileViewer.addWindowListener(new WindowAdapter() {
+						@Override
+						public void windowClosed(WindowEvent e) {
+							changeLocalFilePath();
+							System.out.println("A has closed");
+						}
+					});
+					File file = new File(System.getProperty("java.io.tmpdir") + File.separator + "tempf");
+					fileViewer.openFile(file);
+				} else {
+					logEvent("Error Downloading File");
+				}
+			}).start();
+		} else {
+			logEvent("Not connected to a server");
+		}
+	}
+
 	public void openFilePressed(DirectoryType type) {
 		fileViewer fileViewer = new fileViewer();
 		fileViewer.addWindowListener(new WindowAdapter() {
@@ -89,15 +211,11 @@ public class ftpClientManager {
 				System.out.println("A has closed");
 			}
 		});
-
-		File file = new File(getPath(DirectoryType.Local)+gui.getLocalFileNameField());
-		
-		if (file != null) {
-			new Thread(() -> {
-				fileViewer.openFile(file);
-			}).start();
+		if(type == DirectoryType.Local){
+			File file = new File(getPath(DirectoryType.Local)+gui.getLocalFileNameField());
+			new Thread(() -> fileViewer.openFile(file)).start();
 		}
-	}
+    }
 
 	public void openFileDefaultPressed(DirectoryType type) {
 		Desktop desktop = Desktop.getDesktop();
@@ -139,7 +257,6 @@ public class ftpClientManager {
 					logEvent("Error Downloading File");
 				}
 			}).start();
-
 		} else {
 			logEvent("Not connected to FTP server");
 		}
@@ -292,8 +409,11 @@ public class ftpClientManager {
 				parent = dir.substring(0, offset);
 			}
 		} else {
+			System.out.println("offset: "+offset);
 			if (offset > 0) {
 				parent = dir.substring(0, offset);
+			} if (offset == 0) {
+				parent = dir.substring(0, 1);
 			}
 		}
 		return parent;

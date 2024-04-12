@@ -17,7 +17,7 @@ public class aboutScreen extends JFrame{
 		pack();
 		getContentPane().setLayout(null);
 		
-		JLabel lblNewLabel = new JLabel("FTP Client");
+		JLabel lblNewLabel = new JLabel("SFTP Client");
 		lblNewLabel.setFont(new Font("Georgia", Font.BOLD, 24));
 		lblNewLabel.setBounds(35, 38, 182, 74);
 		getContentPane().add(lblNewLabel);

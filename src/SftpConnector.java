@@ -1,6 +1,11 @@
 import com.jcraft.jsch.*;
+import com.jcraft.jsch.Channel;
+import com.jcraft.jsch.ChannelSftp;
 import com.jcraft.jsch.ChannelSftp.LsEntry;
 
+import com.jcraft.jsch.JSch;
+import com.jcraft.jsch.Session;
+import com.jcraft.jsch.SftpException;
 import files.FileCommon;
 import files.FileSFTPFile;
 

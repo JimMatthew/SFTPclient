@@ -1,0 +1,10 @@
+<component name="libraryTable">
+  <library name="JediTerm">
+    <CLASSES />
+    <JAVADOC />
+    <SOURCES>
+      <root url="file://$PROJECT_DIR$/../jediterm-master/JediTerm" />
+      <root url="file://$PROJECT_DIR$/../jediterm-master/JediTerm/src/main/java" />
+    </SOURCES>
+  </library>
+</component>
