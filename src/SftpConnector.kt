@@ -1,152 +1,135 @@
-import com.jcraft.jsch.Channel;
-import com.jcraft.jsch.ChannelSftp;
-import com.jcraft.jsch.ChannelSftp.LsEntry;
-import com.jcraft.jsch.JSch;
-import com.jcraft.jsch.Session;
-import com.jcraft.jsch.SftpException;
-import files.FileCommon;
-import files.FileSFTPFile;
-import java.io.FileInputStream;
-import java.io.FileOutputStream;
-import java.io.IOException;
-import java.io.InputStream;
-import java.util.ArrayList;
-import java.util.List;
-import java.util.Vector;
+import com.jcraft.jsch.ChannelSftp
+import com.jcraft.jsch.ChannelSftp.LsEntry
+import com.jcraft.jsch.JSch
+import com.jcraft.jsch.SftpException
+import files.FileCommon
+import files.FileSFTPFile
+import java.io.FileInputStream
+import java.io.FileOutputStream
+import java.io.IOException
+import java.util.*
 
-public class SftpConnector implements RemoteConnector {
+class SftpConnector(// Implements RemoteConnector as SFTP client
+    private val host: String, private val user: String, private val pass: String
+) : RemoteConnector {
+    private val path = "/"
+    private var channel: ChannelSftp? = null
 
-	// Implements RemoteConnector as SFTP client
-	private final String host;
-	private final String user;
-	private final String pass;
-	private final String path = "/";
-	private static final int REMOTE_PORT = 22;
-	private static final int SESSION_TIMEOUT = 10000;
-	private static final int CHANNEL_TIMEOUT = 5000;
-	private ChannelSftp channel;
+    override fun connect(): Boolean {
+        try {
+            val jsch = JSch()
+            val knownhosts = "%USERPROFILE%\\.ssh\\known_hosts"
+            jsch.setKnownHosts(knownhosts)
+            val session = jsch.getSession(user, host, REMOTE_PORT)
+            session.setPassword(pass)
+            val config = Properties()
+            config["StrictHostKeyChecking"] = "no"
+            session.setConfig(config)
+            session.connect()
+            val sftp = session.openChannel("sftp")
+            sftp.connect()
+            channel = sftp as ChannelSftp
+            setupSystem()
+            return true
+        } catch (e: Exception) {
+            println(e)
+            return false
+        }
+    }
 
-	public SftpConnector(String host, String user, String pass) {
-		this.host = host;
-		this.user = user;
-		this.pass = pass;
-	}
+    private fun setupSystem() {
+        val systemType = ftpClientManager.OSType.Linux
+    }
 
-	@Override
-	public boolean connect() {
-		try {
-			JSch jsch = new JSch();
-			String knownhosts = "%USERPROFILE%\\.ssh\\known_hosts";
-			jsch.setKnownHosts(knownhosts);
-			Session session = jsch.getSession(user, host, REMOTE_PORT);
-			session.setPassword(pass);
-			java.util.Properties config = new java.util.Properties();
-			config.put("StrictHostKeyChecking", "no");
-			session.setConfig(config);
-			session.connect();
-			Channel sftp = session.openChannel("sftp");
-			sftp.connect();
-			channel = (ChannelSftp) sftp;
-			setupSystem();
-			return true;
-		} catch (Exception e) {
-			System.out.println(e);
-			return false;
-		}
-	}
+    override fun uploadFile(localFileFullName: String, fileName: String, hostDir: String): Boolean {
+        try {
+            FileInputStream(localFileFullName).use { input ->
+                channel!!.put(input, hostDir + fileName)
+                return true
+            }
+        } catch (e: Exception) {
+            return false
+        }
+    }
 
-	private void setupSystem() {
-		ftpClientManager.OSType systemType = ftpClientManager.OSType.Linux;
-	}
+    override fun getSystemType(): ftpClientManager.OSType {
+        return ftpClientManager.OSType.Linux
+    }
 
-	@Override
-	public boolean uploadFile(String localFileFullName, String fileName, String hostDir) {
-		try (InputStream input = new FileInputStream(localFileFullName)) {
-			channel.put(input, hostDir + fileName);
-			return true;
-		} catch (Exception e) {
-			return false;
-		}
-	}
+    override fun downloadFile(remoteFile: String, localFile: String): Boolean {
+        try {
+            channel!![remoteFile, FileOutputStream(localFile)]
+            return true
+        } catch (e: Exception) {
+            return false
+        }
+    }
 
-	@Override
-	public ftpClientManager.OSType getSystemType() {
-		return ftpClientManager.OSType.Linux;
-	}
+    override fun makeDirectory(path: String, name: String): Boolean {
+        try {
+            channel!!.mkdir(path + name)
+            return true
+        } catch (e: SftpException) {
+            e.printStackTrace()
+            return false
+        }
+    }
 
-	@Override
-	public boolean downloadFile(String remoteFile, String localFile) {
-		try {
-			channel.get(remoteFile, new FileOutputStream(localFile));
-			return true;
-		} catch (Exception e) {
-			return false;
-		}
-	}
+    override fun isConnected(): Boolean {
+        return channel!!.isConnected
+    }
 
-	@Override
-	public boolean makeDirectory(String path, String name) {
-		try {
-			channel.mkdir(path + name);
-			return true;
-		} catch (SftpException e) {
-			e.printStackTrace();
-			return false;
-		}
-	}
+    override fun disconnect(): Boolean {
+        channel!!.disconnect()
+        return true
+    }
 
-	@Override
-	public boolean isConnected() {
-		return channel.isConnected();
-	}
+    @Throws(IOException::class)
+    override fun getCommonFileList(path: String): List<FileCommon> {
+        return try {
+            val dirList = getDirList(path)
+            val fileList = getFileList(path)
+            dirList + fileList
+        } catch (e: SftpException) {
+            throw IOException(e)
+        }
+    }
 
-	@Override
-	public boolean disconnect() {
-		channel.disconnect();
-		return true;
-	}
-	
-	@Override
-	public List<FileCommon> getCommonFileList(String path) throws IOException {
-		List<FileCommon> fileList = new ArrayList<>();
-		try {
-			fileList = getDirList(path);
-			fileList.addAll(getFileList(path));
-		} catch (SftpException e) {
-			throw new IOException(e);
-		}
-		return fileList;
-	}
+    @Throws(SftpException::class)
+    private fun getDirList(path: String): MutableList<FileCommon> {
+        val entryList: MutableList<FileCommon> = ArrayList()
+        val files: Vector<*> = channel!!.ls(path)
+        for (file in files) {
+            val entry = file as LsEntry
+            if ("." == entry.filename || ".." == entry.filename) {
+                continue
+            }
+            if (entry.attrs.isDir) {
+                entryList.add(FileSFTPFile(entry))
+            }
+        }
+        return entryList
+    }
 
-	private List<FileCommon> getDirList(String path) throws SftpException {
+    @Throws(SftpException::class)
+    private fun getFileList(path: String): List<FileCommon> {
+        val entryList: MutableList<FileCommon> = ArrayList()
+        val files: Vector<*> = channel!!.ls(path)
+        for (file in files) {
+            val entry = file as LsEntry
+            if ("." == entry.filename || ".." == entry.filename) {
+                continue
+            }
+            if (entry.attrs.isReg) {
+                entryList.add(FileSFTPFile(entry))
+            }
+        }
+        return entryList
+    }
 
-		List<FileCommon> entryList = new ArrayList<>();
-		Vector<?> files = channel.ls(path);
-		for (Object file : files) {
-			LsEntry entry = (LsEntry) file;
-			if (".".equals(entry.getFilename()) || "..".equals(entry.getFilename())) {
-				continue;
-			}
-			if (entry.getAttrs().isDir()) {
-				entryList.add(new FileSFTPFile(entry));
-			}
-		}
-		return entryList;
-	}
-
-	private List<FileCommon> getFileList(String path) throws SftpException {
-
-		List<FileCommon> entryList = new ArrayList<>();
-		Vector<?> files = channel.ls(path);
-		for (Object file : files) {
-			LsEntry entry = (LsEntry) file;
-			if (".".equals(entry.getFilename()) || "..".equals(entry.getFilename())) {
-				continue;
-			}
-			if (entry.getAttrs().isReg()) {
-				entryList.add(new FileSFTPFile(entry));
-			}
-		}
-		return entryList;
-	}
+    companion object {
+        private const val REMOTE_PORT = 22
+        private const val SESSION_TIMEOUT = 10000
+        private const val CHANNEL_TIMEOUT = 5000
+    }
 }

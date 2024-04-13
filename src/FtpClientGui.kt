@@ -1,13 +1,16 @@
+import com.alee.laf.WebLookAndFeel
 import files.FileCommon
+import mdlaf.MaterialLookAndFeel
+import mdlaf.themes.MaterialLiteTheme
 import java.awt.Color
 import java.awt.Dimension
 import java.awt.Font
-import java.awt.event.ActionEvent
 import java.awt.event.MouseAdapter
 import java.awt.event.MouseEvent
 import javax.swing.*
 import javax.swing.border.LineBorder
 import kotlin.system.exitProcess
+
 
 class FtpClientGui(private val manager: ftpClientManager) : JFrame() {
     private val usernameField: JTextField
@@ -51,6 +54,8 @@ class FtpClientGui(private val manager: ftpClientManager) : JFrame() {
             // If you want the System L&F instead, comment out the above line and
             // uncomment the following:
             UIManager.setLookAndFeel(UIManager.getSystemLookAndFeelClassName())
+            //UIManager.setLookAndFeel(WebLookAndFeel())
+           // UIManager.setLookAndFeel(MaterialLookAndFeel(MaterialLiteTheme()))
         } catch (exc: Exception) {
             System.err.println("Error loading L&F: $exc")
         }
@@ -255,7 +260,7 @@ class FtpClientGui(private val manager: ftpClientManager) : JFrame() {
         btnChangeLocalPath.addActionListener { manager.changeLocalFilePath() }
         btnChangeRemotePath.addActionListener { manager.changeRemoteFilePath() }
         btnUpload.addActionListener { manager.uploadPressed() }
-        btnDownload.addActionListener { manager.downloadPressed() }
+        btnDownload.addActionListener { downloadFilePress() }
         mntmNewMenuItem.addActionListener { manager.aboutPressed() }
         mntmNewMenuItem2.addActionListener { exitProcess(0) }
         btnMakeLocalDir.addActionListener { manager.makeLocalDirectoryPressed() }
@@ -284,6 +289,14 @@ class FtpClientGui(private val manager: ftpClientManager) : JFrame() {
         btnSave.addActionListener { manager.saveServer() }
         btnConnectSaved.addActionListener { connectSaved() }
         btnOpenRemoteFile.addActionListener { manager.openRemoteFile() }
+    }
+
+    private fun downloadFilePress(){
+        val lPath = getLocalPathField()
+        val rPath = getRemotePathField()
+        val remoteFileName = getRemoteFilenameField()
+        val localFileName = localFileNameField
+        manager.downloadPress(localFileName!!, remoteFileName, lPath, rPath)
     }
 
     private fun setMouseListener(table: JTable, t: DirectoryType) {

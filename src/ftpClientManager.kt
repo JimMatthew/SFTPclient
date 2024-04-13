@@ -42,7 +42,7 @@ class ftpClientManager {
         connectToServer(gui.hostField.getText(), gui.user, p.toString(), proto)
     }
 
-    fun connectToServer(server: String, user: String?, pass: String?, proto: Int) {
+    fun connectToServer(server: String, user: String, pass: String, proto: Int) {
         connector = when (proto) {
             0 -> FtpConnector(server, user, pass)
             1 -> SftpConnector(server, user, pass)
@@ -163,17 +163,11 @@ class ftpClientManager {
 
     fun openRemoteFile() {
         if (connector != null) { // Ensure we don't attempt to use a null connector
-            val rPath = getPath(DirectoryType.Remote) + gui.getRemoteFilenameField()
-            val lPath = System.getProperty("java.io.tmpdir") + File.separator + "tempf"
-
-            Thread {
-                if (connector!!.downloadFile(rPath, lPath)) {
-                    logEvent(gui.getRemoteFilenameField() + " was downloaded successfully")
-                    openFile(System.getProperty("java.io.tmpdir") + File.separator + "tempf")
-                } else {
-                    logEvent("Error Downloading File")
-                }
-            }.start()
+            downloadPress("tempf",
+                gui.getRemoteFilenameField(),
+                System.getProperty("java.io.tmpdir"),
+                getPath(DirectoryType.Remote)
+            ).also { openFile(System.getProperty("java.io.tmpdir") + File.separator + "tempf") }
         } else {
             logEvent("Not connected to a server")
         }
@@ -185,7 +179,7 @@ class ftpClientManager {
 
     private fun openFile(filename: String) {
         val file = File(filename)
-        if (file.exists()){
+        if (file.exists()) {
             val fileViewer = fileViewer()
             fileViewer.addWindowListener(object : WindowAdapter() {
                 override fun windowClosed(e: WindowEvent) {
@@ -223,23 +217,24 @@ class ftpClientManager {
         }
     }
 
-    fun downloadPressed() {
-        if (connector != null) { // Ensure we don't attempt to use a null connector
-
-            val lPath = getPath(DirectoryType.Local)
-            val rPath = getPath(DirectoryType.Remote)
+    fun downloadPress(localFile: String, remoteFile: String, localPath: String, remotePath: String) {
+        connector?.let { // Use safe call operator to ensure connector is not null
+            val lPath = addEndSlashIfNotPresent(localPath, localSystemType)
+            val rPath = addEndSlashIfNotPresent(remotePath, remoteSystemType)
 
             Thread {
-                if (connector!!.downloadFile(rPath + gui.getRemoteFilenameField(), lPath + gui.localFileNameField)) {
-                    logEvent(gui.getRemoteFilenameField() + " was downloaded sucessfully")
+                val downloadResult = runCatching {
+                    it.downloadFile(rPath + remoteFile, lPath + localFile)
+                }
+                downloadResult.onSuccess {
+                    logEvent("$remoteFile was downloaded successfully")
                     changeLocalFilePath()
-                } else {
-                    logEvent("Error Downloading File")
+                }
+                downloadResult.onFailure {
+                    logEvent("Error downloading file: ${it.message}")
                 }
             }.start()
-        } else {
-            logEvent("Not connected to FTP server")
-        }
+        } ?: logEvent("Not connected to FTP server")
     }
 
     private fun addEndSlashIfNotPresent(path: String, t: OSType?): String {
