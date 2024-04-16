@@ -201,20 +201,24 @@ class ftpClientManager {
         }
     }
 
-    fun uploadPressed() {
-        if (connector != null) { // Ensure we don't attempt to use a null connector
-            val localFile = gui.localFileNameField
-            val remotePath = getPath(DirectoryType.Remote)
-            val localPath = getPath(DirectoryType.Local)
-            val remoteFile = gui.getRemoteFilenameField()
+    fun uploadPress(localFile: String, remoteFile: String, localPath: String, remotePath: String){
+        connector?.let {
+            val lpath = addEndSlashIfNotPresent(localPath, localSystemType)
+            val rpath = addEndSlashIfNotPresent(remotePath, remoteSystemType)
 
-            if (connector!!.uploadFile(localPath + localFile, remoteFile, remotePath)) {
-                logEvent("$localFile was uploaded sucessfully!")
-                changeRemoteFilePath()
-            } else {
-                logEvent("Error Uploading File")
-            }
-        }
+            Thread {
+                val uploadResult = runCatching {
+                    it.uploadFile(lpath + localFile, remoteFile, rpath)
+                }
+                uploadResult.onSuccess {
+                    logEvent("$localFile was uploaded sucessfully!")
+                    changeRemoteFilePath()
+                }
+                uploadResult.onFailure {
+                    logEvent("Error Uploading File")
+                }
+            }.start()
+        } ?: logEvent("Not connected to a server")
     }
 
     fun downloadPress(localFile: String, remoteFile: String, localPath: String, remotePath: String) {
@@ -284,6 +288,12 @@ class ftpClientManager {
     fun changeLocalFilePath() {
         val path = getPath(DirectoryType.Local)
         localFileCommonList = getCommonFileList(path)
+        gui.displayLocalFiles(localFileCommonList!!)
+    }
+
+    fun changeLocalPath(path: String){
+        val p = addEndSlashIfNotPresent(path, localSystemType)
+        localFileCommonList = getCommonFileList(p)
         gui.displayLocalFiles(localFileCommonList!!)
     }
 

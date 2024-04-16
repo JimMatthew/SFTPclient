@@ -259,7 +259,7 @@ class FtpClientGui(private val manager: ftpClientManager) : JFrame() {
         connectButton.addActionListener { manager.connectPressed() }
         btnChangeLocalPath.addActionListener { manager.changeLocalFilePath() }
         btnChangeRemotePath.addActionListener { manager.changeRemoteFilePath() }
-        btnUpload.addActionListener { manager.uploadPressed() }
+        btnUpload.addActionListener { uploadFilePress() }
         btnDownload.addActionListener { downloadFilePress() }
         mntmNewMenuItem.addActionListener { manager.aboutPressed() }
         mntmNewMenuItem2.addActionListener { exitProcess(0) }
@@ -297,6 +297,14 @@ class FtpClientGui(private val manager: ftpClientManager) : JFrame() {
         val remoteFileName = getRemoteFilenameField()
         val localFileName = localFileNameField
         manager.downloadPress(localFileName!!, remoteFileName, lPath, rPath)
+    }
+
+    private fun uploadFilePress(){
+        val lPath = getLocalPathField()
+        val rPath = getRemotePathField()
+        val remoteFileName = getRemoteFilenameField()
+        val localFileName = localFileNameField
+        manager.uploadPress(localFileName!!, remoteFileName, lPath, rPath)
     }
 
     private fun setMouseListener(table: JTable, t: DirectoryType) {

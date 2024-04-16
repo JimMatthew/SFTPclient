@@ -304,3 +304,50 @@
 2024/04/13 02:06:04 ddns was downloaded successfully
 2024/04/13 02:06:10 adblock was downloaded successfully
 2024/04/13 02:06:14 Remote host Disconnected
+2024/04/13 02:13:43 local System: Windows
+2024/04/13 08:47:13 local System: Windows
+2024/04/13 08:47:16 Connected to openwrt.lan
+2024/04/13 08:47:33 miniupnpd.conf was downloaded successfully
+2024/04/13 08:47:46 mini was uploaded sucessfully!
+2024/04/13 08:47:51 Remote host Disconnected
+2024/04/13 08:51:48 local System: Windows
+2024/04/13 08:51:51 Connected to openwrt.lan
+2024/04/13 08:52:16 resolv.conf was downloaded successfully
+2024/04/13 08:52:32 resolv.conf was uploaded sucessfully!
+2024/04/13 08:52:36 resolv.conf was downloaded successfully
+2024/04/13 08:52:44 opnssl.conf was uploaded sucessfully!
+2024/04/13 08:53:00 Remote host Disconnected
+2024/04/13 08:53:01 resolv.conf was uploaded sucessfully!
+2024/04/13 08:53:10 resolv.conf was downloaded successfully
+2024/04/13 08:53:18 resolv.conf was downloaded successfully
+2024/04/13 08:53:21 resolv.conf was downloaded successfully
+2024/04/13 08:53:22 resolv.conf was downloaded successfully
+2024/04/13 08:53:30 resolv.conf was uploaded sucessfully!
+2024/04/13 08:56:09 local System: Windows
+2024/04/13 08:56:11 Not connected to a server
+2024/04/13 09:22:52 local System: Windows
+2024/04/13 22:53:17 local System: Windows
+2024/04/13 22:53:20 Connected to openwrt.lan
+2024/04/13 22:53:33 Remote host Disconnected
+2024/04/15 07:44:04 local System: Windows
+2024/04/15 07:44:14 Connected to openwrt.lan
+2024/04/15 07:44:38 unbound was downloaded successfully
+2024/04/15 07:44:45 Remote host Disconnected
+2024/04/15 09:54:57 local System: Windows
+2024/04/15 09:55:00 Connected to openwrt.lan
+2024/04/15 09:55:20 uhttpd was downloaded successfully
+2024/04/15 09:55:30 Remote host Disconnected
+2024/04/15 20:42:50 local System: Windows
+2024/04/15 20:42:54 Connected to openwrt.lan
+2024/04/15 20:43:01 dhcp was downloaded successfully
+2024/04/15 20:43:42 Remote host Disconnected
+2024/04/15 21:47:47 local System: Windows
+2024/04/15 21:48:00 Connected to openwrt.lan
+2024/04/15 21:49:17 uci.sh was downloaded successfully
+2024/04/15 21:49:33 Remote host Disconnected
+2024/04/15 21:49:36 Connected to openwrt.lan
+2024/04/15 21:49:49 cascade.css was downloaded successfully
+2024/04/15 21:50:24 firewall.js was downloaded successfully
+2024/04/15 21:50:47 6in4.js was downloaded successfully
+2024/04/15 21:50:54 wireguard.js was downloaded successfully
+2024/04/15 21:51:01 Remote host Disconnected
