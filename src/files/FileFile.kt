@@ -1,32 +1,21 @@
-package files;
+package files
 
-import java.io.File;
+import java.io.File
 
-public class FileFile implements FileCommon {
+class FileFile(private val file: File) : FileCommon {
+    override fun getFileName(): String {
+        return file.name
+    }
 
-	private final File file;
-	
-	public FileFile(File file) {
-		this.file = file;
-	}
-	@Override
-	public String getFileName() {
-		return file.getName();
-	}
+    override fun getFileSize(): Long {
+        return file.length()
+    }
 
-	@Override
-	public long getFileSize() {
-		return file.length();
-	}
+    override fun isFile(): Boolean {
+        return file.isFile
+    }
 
-	@Override
-	public boolean isFile() {
-		return file.isFile();
-	}
-
-	@Override
-	public boolean isDirectory() {
-		return file.isDirectory();
-	}
-
+    override fun isDirectory(): Boolean {
+        return file.isDirectory
+    }
 }

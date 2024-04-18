@@ -1,33 +1,21 @@
-package files;
+package files
 
-import org.apache.commons.net.ftp.FTPFile;
+import org.apache.commons.net.ftp.FTPFile
 
-public class FileFTPFile implements FileCommon {
-	
-	private final FTPFile file;
-	
-	public FileFTPFile(FTPFile file) {
-		this.file = file;
-	}
+class FileFTPFile(private val file: FTPFile) : FileCommon {
+    override fun getFileName(): String {
+        return file.name
+    }
 
-	@Override
-	public String getFileName() {
-		return file.getName();
-	}
+    override fun getFileSize(): Long {
+        return file.size
+    }
 
-	@Override
-	public long getFileSize() {
-		return file.getSize();
-	}
+    override fun isFile(): Boolean {
+        return file.isFile
+    }
 
-	@Override
-	public boolean isFile() {
-		return file.isFile();
-	}
-
-	@Override
-	public boolean isDirectory() {
-		return file.isDirectory();
-	}
-
+    override fun isDirectory(): Boolean {
+        return file.isDirectory
+    }
 }

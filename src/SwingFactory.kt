@@ -1,33 +1,29 @@
-import java.awt.Color;
-import java.awt.Cursor;
+import java.awt.Color
+import java.awt.Cursor
+import javax.swing.JButton
+import javax.swing.JTextField
+import javax.swing.border.LineBorder
 
-import javax.swing.JButton;
-import javax.swing.JTextField;
-import javax.swing.border.LineBorder;
+object SwingFactory {
 
-public class SwingFactory {
+    fun newField(): JTextField {
+        val field = JTextField()
+        field.border = LineBorder(Color.GRAY)
+        return field
+    }
 
-	public SwingFactory() {
-		
-	}
-	
-	public static JTextField newField() {
-		JTextField field = new JTextField();
-		field.setBorder(new LineBorder(Color.GRAY));
-		return field;
-	}
-	
-	public static JTextField newUneditableField() {
-		JTextField field = new JTextField();
-		field.setBorder(new LineBorder(Color.GRAY));
-		field.setEditable(false);
-		return field;
-	}
-	
-	public static JButton newButton(String label) {
-		JButton button = new JButton(label);
-		button.setBackground(Color.LIGHT_GRAY);
-		button.setCursor(Cursor.getPredefinedCursor(Cursor.HAND_CURSOR));
-		return button;
-	}
+    fun newUneditableField(): JTextField {
+        val field = JTextField()
+        field.border = LineBorder(Color.GRAY)
+        field.isEditable = false
+        return field
+    }
+
+    @JvmStatic
+	fun newButton(label: String?): JButton {
+        val button = JButton(label)
+        button.background = Color.LIGHT_GRAY
+        button.cursor = Cursor.getPredefinedCursor(Cursor.HAND_CURSOR)
+        return button
+    }
 }

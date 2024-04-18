@@ -1,91 +1,71 @@
-import jftp.JFTP;
-import files.FileCommon;
-import java.io.IOException;
-import java.util.ArrayList;
-import java.util.List;
+import files.FileCommon
+import jftp.JFTP
+import java.io.IOException
 
-public class JftpConnector implements RemoteConnector {
+class JftpConnector internal constructor(private val host: String, private val user: String, private val pass: String) :
+    RemoteConnector {
+    private var Ftp: JFTP? = null
 
-	private final String host;
-	private final String user;
-	private final String pass;
-	private JFTP Ftp;
+    override fun connect(): Boolean {
+        Ftp = JFTP()
+        try {
+            Ftp!!.connect(host, 21, user, pass)
+            Ftp!!.cd("/")
+        } catch (e: IOException) {
+            e.printStackTrace()
+            return false
+        }
+        return true
+    }
 
-	JftpConnector(String host, String user, String pass) {
-		this.host = host;
-		this.user = user;
-		this.pass = pass;
-	}
+    override fun uploadFile(localFileFullName: String, fileName: String, hostDir: String): Boolean {
+        return Ftp!!.upload(localFileFullName, hostDir + fileName)
+    }
 
-	@Override
-	public boolean connect() {
-		Ftp = new JFTP();
-		try {
-			Ftp.connect(host, 21, user, pass);
-			Ftp.cd("/");
-		} catch (IOException e) {
-			e.printStackTrace();
-			return false;
-		}
-		return true;
-	}
+    override fun getSystemType(): ftpClientManager.OSType {
+        return ftpClientManager.OSType.Linux
+    }
 
-	@Override
-	public boolean uploadFile(String localFileFullName, String fileName, String hostDir) {
-		return Ftp.upload(localFileFullName, hostDir + fileName);
-	}
+    override fun downloadFile(remoteFile: String, localFile: String): Boolean {
+        return Ftp!!.download(localFile, remoteFile)
+    }
 
-	@Override
-	public ftpClientManager.OSType getSystemType() {
-		return ftpClientManager.OSType.Linux;
-	}
+    override fun makeDirectory(path: String, name: String): Boolean {
+        try {
+            Ftp!!.makeDirectory(path + name)
+        } catch (e: IOException) {
+            return false
+        }
+        return true
+    }
 
-	@Override
-	public boolean downloadFile(String remoteFile, String localFile) {
-		return Ftp.download(localFile, remoteFile);
-	}
+    override fun isConnected(): Boolean {
+        return Ftp!!.isConnected
+    }
 
-	@Override
-	public boolean makeDirectory(String path, String name) {
-		try {
-			Ftp.makeDirectory(path + name);
-		} catch (IOException e) {
-			return false;
-		}
-		return true;
-	}
+    override fun disconnect(): Boolean {
+        Ftp!!.disconnect()
+        return true
+    }
 
-	@Override
-	public boolean isConnected() {
-		return Ftp.isConnected();
-	}
-
-	@Override
-	public boolean disconnect() {
-		Ftp.disconnect();
-		return true;
-	}
-
-	@Override
-	public List<FileCommon> getCommonFileList(String path) {
-
-		List<FileCommon> fileList = new ArrayList<>();
-		List<FileCommon> files = new ArrayList<>();
-		try {
-			files = Ftp.getJFTPFileList(path);
-		} catch (IOException e) {
-			e.printStackTrace();
-		}
-		for (FileCommon file : files) {
-			if (file.isDirectory()) {
-				fileList.add(file);
-			}
-		}
-		for (FileCommon file : files) {
-			if (file.isFile()) {
-				fileList.add(file);
-			}
-		}
-		return fileList;
-	}
+    override fun getCommonFileList(path: String): List<FileCommon> {
+        val fileList: MutableList<FileCommon> = ArrayList()
+        var files: List<FileCommon> = ArrayList()
+        try {
+            files = Ftp!!.getJFTPFileList(path)
+        } catch (e: IOException) {
+            e.printStackTrace()
+        }
+        for (file in files) {
+            if (file.isDirectory) {
+                fileList.add(file)
+            }
+        }
+        for (file in files) {
+            if (file.isFile) {
+                fileList.add(file)
+            }
+        }
+        return fileList
+    }
 }

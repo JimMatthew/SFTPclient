@@ -27,9 +27,9 @@ public interface RemoteConnector {
 	//Returns true if connected
 	boolean isConnected();
 
-	//disconnect current session. 
+	//disconnect current session.
 	boolean disconnect();
-	
+
 	//returns of List of FileCommon ojects representing each file at path
 	List<FileCommon> getCommonFileList(String path) throws IOException;
 

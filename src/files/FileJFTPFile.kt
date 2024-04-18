@@ -1,32 +1,21 @@
-package files;
+package files
 
-import jftp.JFTP.JFTPFile;
+import jftp.JFTP.JFTPFile
 
-public class FileJFTPFile implements FileCommon {
+class FileJFTPFile(private val file: JFTPFile) : FileCommon {
+    override fun getFileName(): String {
+        return file.name
+    }
 
-	private final JFTPFile file;
-	
-	public FileJFTPFile(JFTPFile file) {
-		this.file = file;
-	}
-	@Override
-	public String getFileName() {
-		return file.getName();
-	}
+    override fun getFileSize(): Long {
+        return file.size.trim { it <= ' ' }.toLong()
+    }
 
-	@Override
-	public long getFileSize() {
-		return Long.parseLong(file.getSize().trim());
-	}
+    override fun isFile(): Boolean {
+        return file.isFile
+    }
 
-	@Override
-	public boolean isFile() {
-		return file.isFile();
-	}
-
-	@Override
-	public boolean isDirectory() {
-		return file.isDirectory();
-	}
-
+    override fun isDirectory(): Boolean {
+        return file.isDirectory
+    }
 }

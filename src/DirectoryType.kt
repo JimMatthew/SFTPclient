@@ -1,4 +1,4 @@
-public enum DirectoryType {
-	Local, Remote
+enum class DirectoryType {
+    Local, Remote
 }
 

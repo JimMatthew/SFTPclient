@@ -1,17 +1,9 @@
+import javax.swing.SwingUtilities
 
-import javax.swing.SwingUtilities;
 //import com.formdev.flatlaf.FlatLightLaf;
-
-public class ftpClientt {
-
-	public static void main(String[] args)
-	{
-		
-		 SwingUtilities.invokeLater(new Runnable() {
-		      public void run() {
-		    	  ftpClientManager manager = new ftpClientManager();
-		      }
-		    });
-	}
-	
+object ftpClientt {
+    @JvmStatic
+    fun main(args: Array<String>) {
+        SwingUtilities.invokeLater { val manager = ftpClientManager() }
+    }
 }

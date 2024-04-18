@@ -1,58 +1,63 @@
-import javax.swing.*;
-import javax.swing.border.LineBorder;
-import java.awt.*;
+import SwingFactory.newButton
+import java.awt.Color
+import java.awt.Dimension
+import java.awt.Font
+import java.awt.event.ActionEvent
+import javax.swing.JButton
+import javax.swing.JFrame
+import javax.swing.JLabel
+import javax.swing.JTextField
+import javax.swing.border.LineBorder
 
-public class DirectoryNameEntryGui extends JFrame {
-    private final JTextField newDirNameField;
-    private final ftpClientManager manager;
-    private final JButton btnCreate;
-    private final JButton btnCancel;
-    private DirectoryType type;
+class DirectoryNameEntryGui(private val manager: ftpClientManager) : JFrame() {
+    private val newDirNameField: JTextField
+    private val btnCreate: JButton
+    private val btnCancel: JButton
+    private var type: DirectoryType? = null
 
-    public DirectoryNameEntryGui(ftpClientManager manager) {
-        this.manager = manager;
-        setDefaultCloseOperation(JFrame.DISPOSE_ON_CLOSE);
-        setResizable(true);
-        setPreferredSize(new Dimension(355, 180));
-        pack();
-        getContentPane().setLayout(null);
-        setLocationRelativeTo(null);
-        JLabel lblPleaseEnterA = new JLabel("Please enter a name for the new directory");
-        lblPleaseEnterA.setFont(new Font("Tahoma", Font.BOLD, 13));
-        lblPleaseEnterA.setBounds(25, 22, 358, 14);
-        getContentPane().add(lblPleaseEnterA);
+    init {
+        defaultCloseOperation = DISPOSE_ON_CLOSE
+        isResizable = true
+        preferredSize = Dimension(355, 180)
+        pack()
+        contentPane.layout = null
+        setLocationRelativeTo(null)
+        val lblPleaseEnterA = JLabel("Please enter a name for the new directory")
+        lblPleaseEnterA.font = Font("Tahoma", Font.BOLD, 13)
+        lblPleaseEnterA.setBounds(25, 22, 358, 14)
+        contentPane.add(lblPleaseEnterA)
 
-        newDirNameField = new JTextField();
-        newDirNameField.setBorder(new LineBorder(new Color(171, 173, 179)));
-        newDirNameField.setBounds(65, 47, 214, 20);
-        getContentPane().add(newDirNameField);
-        newDirNameField.setColumns(10);
+        newDirNameField = JTextField()
+        newDirNameField.border = LineBorder(Color(171, 173, 179))
+        newDirNameField.setBounds(65, 47, 214, 20)
+        contentPane.add(newDirNameField)
+        newDirNameField.columns = 10
 
-        btnCreate = SwingFactory.newButton("Create");
-        btnCreate.setBounds(65, 93, 89, 23);
-        getContentPane().add(btnCreate);
+        btnCreate = newButton("Create")
+        btnCreate.setBounds(65, 93, 89, 23)
+        contentPane.add(btnCreate)
 
-        btnCancel = SwingFactory.newButton("Cancel");
-        btnCancel.setBounds(190, 93, 89, 23);
-        getContentPane().add(btnCancel);
-        addAction();
+        btnCancel = newButton("Cancel")
+        btnCancel.setBounds(190, 93, 89, 23)
+        contentPane.add(btnCancel)
+        addAction()
     }
 
-    public void launchAndGetName(DirectoryType type) {
-        setVisible(true);
-        this.type = type;
-        setTitle("Add " + type.toString() + " Directory");
+    fun launchAndGetName(type: DirectoryType) {
+        isVisible = true
+        this.type = type
+        title = "Add $type Directory"
     }
 
-    private void addAction() {
-        btnCancel.addActionListener(event -> dispose());
-        btnCreate.addActionListener(event -> returnNameToManager());
-        newDirNameField.addActionListener(event -> returnNameToManager());
+    private fun addAction() {
+        btnCancel.addActionListener { dispose() }
+        btnCreate.addActionListener { returnNameToManager() }
+        newDirNameField.addActionListener { returnNameToManager() }
     }
 
-    private void returnNameToManager() {
-        manager.makeDirectory(type, newDirNameField.getText());
-        setVisible(false);
-        dispose();
+    private fun returnNameToManager() {
+        manager.makeDirectory(type!!, newDirNameField.text)
+        isVisible = false
+        dispose()
     }
 }

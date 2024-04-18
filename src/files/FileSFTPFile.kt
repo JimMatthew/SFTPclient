@@ -1,33 +1,21 @@
-package files;
+package files
 
-import com.jcraft.jsch.ChannelSftp.LsEntry;
+import com.jcraft.jsch.ChannelSftp.LsEntry
 
-public class FileSFTPFile implements FileCommon {
-	
-	private final LsEntry file;
-	
-	public FileSFTPFile(LsEntry file) {
-		this.file = file;
-	}
+class FileSFTPFile(private val file: LsEntry) : FileCommon {
+    override fun getFileName(): String {
+        return file.filename
+    }
 
-	@Override
-	public String getFileName() {
-		return file.getFilename();
-	}
+    override fun getFileSize(): Long {
+        return file.attrs.size
+    }
 
-	@Override
-	public long getFileSize() {
-		return file.getAttrs().getSize();
-	}
+    override fun isFile(): Boolean {
+        return file.attrs.isReg
+    }
 
-	@Override
-	public boolean isFile() {
-		return file.getAttrs().isReg();
-	}
-
-	@Override
-	public boolean isDirectory() {
-		return file.getAttrs().isDir();
-	}
-
+    override fun isDirectory(): Boolean {
+        return file.attrs.isDir
+    }
 }

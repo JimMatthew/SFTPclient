@@ -1,161 +1,131 @@
-import java.io.FileInputStream;
-import java.io.FileOutputStream;
-import java.io.IOException;
-import java.io.InputStream;
-import java.lang.reflect.InvocationTargetException;
-import java.util.ArrayList;
-import java.util.Arrays;
-import java.util.List;
+import files.FileCommon
+import files.FileFTPFile
+import org.apache.commons.net.ftp.FTPClient
+import java.io.FileInputStream
+import java.io.FileOutputStream
+import java.io.IOException
+import java.util.*
 
-import org.apache.commons.net.ftp.FTPClient;
-import org.apache.commons.net.ftp.FTPFile;
+class FtpConnector(// Implements RemoteConnector as FTP client
+    private val host: String, private val user: String, private val pass: String
+) : RemoteConnector {
+    private val path = "/"
+    private var client: FTPClient? = null
+    private var systemType: ftpClientManager.OSType? = null
+    private var type: SystemType? = null
 
-import files.FileCommon;
-import files.FileFTPFile;
-
-public class FtpConnector implements RemoteConnector{
-
-    // Implements RemoteConnector as FTP client
-    private final String host;
-    private final String user;
-    private final String pass;
-    private final String path = "/";
-    private FTPClient client;
-    private ftpClientManager.OSType systemType;
-    private SystemType type;
-
-    public FtpConnector(String host, String user, String pass) {
-        this.host = host;
-        this.user = user;
-        this.pass = pass;
-    }
-
-    public boolean connect() {
+    override fun connect(): Boolean {
         try {
-            client = new FTPClient();
-            client.connect(host);
-            client.login(user, pass);
-            setupSystem();
-            return true;
-        } catch (Exception e) {
-        	logWriter.log(e.toString());
-            return false;
+            client = FTPClient()
+            client!!.connect(host)
+            client!!.login(user, pass)
+            setupSystem()
+            return true
+        } catch (e: Exception) {
+            logWriter.log(e.toString())
+            return false
         }
     }
 
-    private void setupSystem() {
-        String type;
+    private fun setupSystem() {
+        val type: String
         try {
-            type = client.getSystemType().toLowerCase();
-            System.out.print(client.getSystemType().toLowerCase());
-        } catch (IOException e) {
-        	logWriter.log(e.toString());
-            return;
+            type = client!!.systemType.lowercase(Locale.getDefault())
+            print(client!!.systemType.lowercase(Locale.getDefault()))
+        } catch (e: IOException) {
+            logWriter.log(e.toString())
+            return
         }
 
         if (type.contains("windows")) {
-            systemType = ftpClientManager.OSType.Windows;
+            systemType = ftpClientManager.OSType.Windows
         }
         if (type.contains("unix")) {
-            systemType = ftpClientManager.OSType.Linux;
+            systemType = ftpClientManager.OSType.Linux
         }
     }
 
-    public boolean uploadFile(String localFileFullName, String fileName, String hostDir) {
-        try (InputStream input = new FileInputStream(localFileFullName)) {
-            return this.client.storeFile(hostDir + fileName, input);
-        } catch (Exception e) {
-        	logWriter.log(e.toString());
-            return false;
+    override fun uploadFile(localFileFullName: String, fileName: String, hostDir: String): Boolean {
+        try {
+            FileInputStream(localFileFullName).use { input ->
+                return client!!.storeFile(hostDir + fileName, input)
+            }
+        } catch (e: Exception) {
+            logWriter.log(e.toString())
+            return false
         }
     }
 
-    public ftpClientManager.OSType getSystemType() {
+    override fun getSystemType(): ftpClientManager.OSType {
         if (systemType == null) {
-            String type = null;
+            var type: String? = null
             try {
-                type = client.getSystemType().toLowerCase();
-                System.out.print(client.getSystemType().toLowerCase());
-            } catch (IOException e) {
-            	logWriter.log(e.toString());
+                type = client!!.systemType.lowercase(Locale.getDefault())
+                print(client!!.systemType.lowercase(Locale.getDefault()))
+            } catch (e: IOException) {
+                logWriter.log(e.toString())
             }
-            systemType = type.contains("windows") ? ftpClientManager.OSType.Windows : ftpClientManager.OSType.Linux;
+            systemType =
+                if (type!!.contains("windows")) ftpClientManager.OSType.Windows else ftpClientManager.OSType.Linux
         }
-        return systemType;
+        return systemType as ftpClientManager.OSType
     }
 
-    public SystemType SystemType() {
-        if (type == null) {
-            String stype = null;
-            try {
-                stype = client.getSystemType().toLowerCase();
-                System.out.print(client.getSystemType().toLowerCase());
-            } catch (IOException e) {
-            	logWriter.log(e.toString());
-            }
-            if (stype.contains("windows")) {
-                type = SystemType.Windows;
-            }
-            if (stype.contains("unix")) {
-                type = SystemType.Linux;
-            }
-        }
-        return type;
-    }
 
-    public boolean downloadFile(String remoteFile, String localFile) {
+
+    override fun downloadFile(remoteFile: String, localFile: String): Boolean {
         try {
-            return this.client.retrieveFile(remoteFile, new FileOutputStream(localFile));
-        } catch (Exception e) {
-        	logWriter.log(e.toString());
-            return false;
+            return client!!.retrieveFile(remoteFile, FileOutputStream(localFile))
+        } catch (e: Exception) {
+            logWriter.log(e.toString())
+            return false
         }
     }
 
-    public boolean makeDirectory(String path, String name) {
+    override fun makeDirectory(path: String, name: String): Boolean {
         try {
-            return client.makeDirectory(path + name);
-        } catch (IOException e) {
-        	logWriter.log(e.toString());
-            return false;
+            return client!!.makeDirectory(path + name)
+        } catch (e: IOException) {
+            logWriter.log(e.toString())
+            return false
         }
     }
 
-    public boolean isConnected() {
-        return client != null && client.isConnected();
+    override fun isConnected(): Boolean {
+        return client != null && client!!.isConnected
     }
 
-    public boolean disconnect() {
+    override fun disconnect(): Boolean {
         try {
-            client.disconnect();
-            return true;
-        } catch (IOException e) {
-        	logWriter.log(e.toString());
-            return false;
+            client!!.disconnect()
+            return true
+        } catch (e: IOException) {
+            logWriter.log(e.toString())
+            return false
         }
     }
-    
-    public List<FileCommon> getCommonFileList(String path) throws IOException{
-		List<FileCommon> fileList = new ArrayList<>();
-		List<FTPFile> list = Arrays.asList(client.listFiles(path));
-		
-		for (FTPFile file: list) {
-			if (file.isDirectory()) {
-				FileCommon filec = new FileFTPFile(file);
-				fileList.add(filec);
-    		}
-		}
-		for (FTPFile file : list) {
-			if (file.isFile()) {
-				FileCommon filec = new FileFTPFile(file);
-				fileList.add(filec);
-    		}
-			
-		}
-		return fileList;
-	}
 
-    public enum SystemType {
+    @Throws(IOException::class)
+    override fun getCommonFileList(path: String): List<FileCommon> {
+        val fileList: MutableList<FileCommon> = ArrayList()
+        val list = Arrays.asList(*client!!.listFiles(path))
+
+        for (file in list) {
+            if (file.isDirectory) {
+                val filec: FileCommon = FileFTPFile(file)
+                fileList.add(filec)
+            }
+        }
+        for (file in list) {
+            if (file.isFile) {
+                val filec: FileCommon = FileFTPFile(file)
+                fileList.add(filec)
+            }
+        }
+        return fileList
+    }
+
+    enum class SystemType {
         Windows, Linux
     }
 }
